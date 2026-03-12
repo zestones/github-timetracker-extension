@@ -1,5 +1,5 @@
 import { GITHUB_API_URL, COMMENT_TEMPLATE } from './constants.js';
-import {GitHubStorageService} from "./github-storage.js";
+import { GitHubStorageService } from "./github-storage.js";
 
 export class GitHubService {
     static parseIssueUrl(url) {
@@ -51,5 +51,20 @@ export class GitHubService {
             method: 'POST',
             body: JSON.stringify({ body: COMMENT_TEMPLATE(timeString) })
         });
+    }
+
+    static async searchRepositories(query) {
+        const results = await this.apiRequest(
+            `/search/repositories?q=${encodeURIComponent(query)}&per_page=20&sort=updated`
+        );
+        return results.items || [];
+    }
+
+    static async getRepoIssues(owner, repo) {
+        const issues = await this.apiRequest(
+            `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues?state=open&per_page=100&sort=updated`
+        );
+        // Filter out pull requests (GitHub API returns PRs in /issues endpoint)
+        return issues.filter((issue) => !issue.pull_request);
     }
 }

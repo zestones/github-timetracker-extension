@@ -1,26 +1,27 @@
 import { useState, useEffect } from 'preact/hooks';
-import { Tabs } from './Tabs.jsx';
-import { Button } from '../components/Button/Button.jsx';
-import { Input } from '../components/Input/Input.jsx';
-import { Modal } from '../components/Modal/Modal.jsx';
-import { SummaryView } from './Views/TrackedList/SummaryView.jsx';
+import { ActiveTimer } from '../components/ActiveTimer/ActiveTimer.jsx';
+import { IssuesTab } from './Views/IssuesTab/IssuesTab.jsx';
+import { StatsTab } from './Views/StatsTab/StatsTab.jsx';
 import { HistoryView } from './Views/TrackedList/HistoryView.jsx';
+import { CalendarView } from './Views/TrackedList/CalendarView.jsx';
+import { Settings } from '../components/Settings/Settings.jsx';
+import { Modal } from '../components/Modal/Modal.jsx';
 import { GitHubStorageService } from '../utils/github-storage.js';
 import { StorageService } from '../utils/storage.js';
+import { IssueStorageService } from '../utils/issue-storage.js';
 import { STORAGE_KEYS } from '../utils/constants.js';
-import {useStorageListener} from "../hooks/useStorageListener.js";
-import {IssueStorageService} from "../utils/issue-storage.js";
+import { useStorageListener } from '../hooks/useStorageListener.js';
 import './App.css';
-import { CalendarView } from "./Views/TrackedList/CalendarView.jsx";
 
 export function App() {
-    const NO_TOKEN_TEXT = 'no token';
-
     const [token, setToken] = useState('');
-    const [isEditing, setIsEditing] = useState(false);
-    const [maskedToken, setMaskedToken] = useState(NO_TOKEN_TEXT);
-    const [tokenStatus, setTokenStatus] = useState(null);
+    const [maskedToken, setMaskedToken] = useState('no token');
+    const [activeTab, setActiveTab] = useState('issues');
+    const [showSettings, setShowSettings] = useState(false);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
+    const [tokenLoaded, setTokenLoaded] = useState(false);
+    const [tokenInput, setTokenInput] = useState('');
+    const [tokenError, setTokenError] = useState('');
 
     const tracked = useStorageListener(STORAGE_KEYS.TRACKED_TIMES, []);
 
@@ -31,136 +32,153 @@ export function App() {
                 setToken(savedToken);
                 setMaskedToken(savedToken.slice(0, 4) + '••••••••');
             }
+            setTokenLoaded(true);
         };
         loadToken();
     }, []);
 
-    const handleSaveToken = async () => {
-        const isValid = await GitHubStorageService.validateGitHubToken(token);
-        if (isValid) {
-            await GitHubStorageService.setGitHubToken(token);
-            setMaskedToken(token.slice(0, 4) + '••••••••');
-            setIsEditing(false);
-            setTokenStatus(null);
+    const handleTokenChange = (newToken) => {
+        setToken(newToken);
+        if (newToken) {
+            setMaskedToken(newToken.slice(0, 4) + '••••••••');
         } else {
-            setTokenStatus({
-                type: 'error',
-                message: 'Invalid token'
-            });
+            setMaskedToken('no token');
         }
     };
 
-    const handleEditClick = () => {
-        setIsEditing(true);
-    };
-
-    const handleCancelClick = () => {
-        setIsEditing(false);
-        setTokenStatus(null);
-    };
-
-    const removeTokenHandler = async () => {
-        await GitHubStorageService.removeGitHubToken();
-        setMaskedToken(NO_TOKEN_TEXT);
-        setToken('');
-    };
-
-    const handleClearTrackedTimes = () => {
-        setShowClearConfirm(true);
+    const handleSaveToken = async () => {
+        const isValid = await GitHubStorageService.validateGitHubToken(tokenInput);
+        if (isValid) {
+            await GitHubStorageService.setGitHubToken(tokenInput);
+            setToken(tokenInput);
+            setMaskedToken(tokenInput.slice(0, 4) + '••••••••');
+            setTokenInput('');
+            setTokenError('');
+        } else {
+            setTokenError('Invalid token. Please check and try again.');
+        }
     };
 
     const confirmClear = async () => {
-        try {
-            await StorageService.remove(STORAGE_KEYS.TRACKED_TIMES);
-            await IssueStorageService.removeAll();
-            setShowClearConfirm(false);
-        } catch (error) {
-            console.error('Failed to clear tracked times:', error);
-            setShowClearConfirm(false);
-            alert('Failed to clear tracked times. Please try again.');
-        }
-    };
-
-    const cancelClear = () => {
+        await StorageService.remove(STORAGE_KEYS.TRACKED_TIMES);
+        await IssueStorageService.removeAll();
         setShowClearConfirm(false);
     };
 
-    return (
-      <div className="p-4 box-border w-[400px] font-['Inter',sans-serif]">
-          <h4 className="text-center text-lg font-semibold">⏱️ GitHub Time Tracker</h4>
+    if (!tokenLoaded) return null;
 
-          {!isEditing ? (
-            <div className="flex justify-between items-center my-4">
-                <span className="text-sm text-gray-600">
-                    {token ? '✅' : '❌'} Token: {maskedToken}
-                </span>
-                <div className="flex gap-2">
-                    {token && (
-                      <span
-                        className="cursor-pointer hover:underline"
-                        onClick={removeTokenHandler}
-                      >
-                        Remove
-                      </span>
-                    )}
-                    <span
-                      className="text-blue-600 cursor-pointer hover:underline"
-                      onClick={handleEditClick}
-                    >
-                        Change
-                    </span>
-                </div>
-            </div>
-          ) : (
-            <div className="my-4">
-                <Input
-                  type="password"
-                  value={token}
-                  onInput={(e) => setToken(e.target.value)}
-                  placeholder="GitHub Token"
+    // Token setup screen
+    if (!token) {
+        return (
+            <div className="w-[420px] p-6 font-['Inter',sans-serif]">
+                <h1 className="text-lg font-semibold text-center mb-2">⏱️ GitHub Time Tracker</h1>
+                <p className="text-sm text-gray-500 text-center mb-4">
+                    Enter your GitHub Personal Access Token to get started.
+                </p>
+                <input
+                    type="password"
+                    value={tokenInput}
+                    onInput={(e) => setTokenInput(e.target.value)}
+                    placeholder="ghp_xxxxxxxxxxxx"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 mb-2"
                 />
-                {tokenStatus && tokenStatus.type === 'error' && (
-                  <span className="text-red-500 block mb-2">
-                    {tokenStatus.message}
-                  </span>
-                )}
-                <div className="flex gap-2">
-                    <Button onClick={handleSaveToken}>Save Token</Button>
-                    <Button variant="secondary" onClick={handleCancelClick}>Cancel</Button>
-                </div>
+                {tokenError && <div className="text-xs text-red-500 mb-2">{tokenError}</div>}
+                <button
+                    onClick={handleSaveToken}
+                    className="w-full bg-green-600 text-white text-sm font-medium py-2 rounded-md hover:bg-green-700 cursor-pointer transition-colors"
+                >
+                    Save Token
+                </button>
             </div>
-          )}
+        );
+    }
 
-          {
-            tracked.length > 0 && (
-              <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                      <Tabs
-                        tabs={[
-                            {id: 'summary', label: 'Summary', content: <SummaryView tracked={tracked}/>},
-                            {id: 'history', label: 'History', content: <HistoryView tracked={tracked}/>},
-                            {id: 'calendar', label: 'Calendar', content: <CalendarView tracked={tracked}/>},
-                        ]}
-                        defaultActiveId="summary"
-                        tabsHeaderRight={<div
-                          onClick={handleClearTrackedTimes}
-                          className="text-sm cursor-pointer hover:underline"
-                        >
-                            Clear
-                        </div>}
-                      />
-                  </div>
-              </div>)
-          }
+    return (
+        <div className="w-[420px] font-['Inter',sans-serif]">
+            {/* Header */}
+            <div className="flex items-center justify-between px-3 py-2.5 border-b border-gray-200">
+                <h1 className="text-sm font-semibold text-gray-800">⏱️ GitHub Time Tracker</h1>
+                <button
+                    onClick={() => setShowSettings(!showSettings)}
+                    className={`text-base cursor-pointer transition-colors ${showSettings ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                >
+                    ⚙
+                </button>
+            </div>
 
-          {showClearConfirm && (
-            <Modal
-              title="Confirm Clear"
-              message="Are you sure you want to clear all tracked times? This action cannot be undone."
-              onConfirm={confirmClear}
-              onCancel={cancelClear}
-            />
-          )}
-      </div>
+            {/* Active Timer */}
+            <div className="px-3 pt-3">
+                <ActiveTimer />
+            </div>
+
+            {/* Tab bar */}
+            <div className="flex gap-1 px-3 py-1.5 border-b border-gray-100">
+                <button
+                    className={`text-sm px-3 py-1 rounded-md cursor-pointer transition-colors ${activeTab === 'issues'
+                        ? 'bg-gray-100 font-medium text-gray-900'
+                        : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    onClick={() => setActiveTab('issues')}
+                >
+                    Issues
+                </button>
+                <button
+                    className={`text-sm px-3 py-1 rounded-md cursor-pointer transition-colors ${activeTab === 'stats'
+                        ? 'bg-gray-100 font-medium text-gray-900'
+                        : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    onClick={() => setActiveTab('stats')}
+                >
+                    Stats
+                </button>
+                <button
+                    className={`text-sm px-3 py-1 rounded-md cursor-pointer transition-colors ${activeTab === 'history'
+                        ? 'bg-gray-100 font-medium text-gray-900'
+                        : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    onClick={() => setActiveTab('history')}
+                >
+                    History
+                </button>
+                <button
+                    className={`text-sm px-3 py-1 rounded-md cursor-pointer transition-colors ${activeTab === 'calendar'
+                        ? 'bg-gray-100 font-medium text-gray-900'
+                        : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    onClick={() => setActiveTab('calendar')}
+                >
+                    Calendar
+                </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-3 max-h-[380px] overflow-y-auto">
+                {activeTab === 'issues' && <IssuesTab />}
+                {activeTab === 'stats' && <StatsTab tracked={tracked} />}
+                {activeTab === 'history' && <HistoryView tracked={tracked} />}
+                {activeTab === 'calendar' && <CalendarView tracked={tracked} />}
+            </div>
+
+            {/* Settings panel */}
+            {showSettings && (
+                <Settings
+                    token={token}
+                    maskedToken={maskedToken}
+                    onTokenChange={handleTokenChange}
+                    onClearData={() => setShowClearConfirm(true)}
+                />
+            )}
+
+            {/* Clear confirmation modal */}
+            {showClearConfirm && (
+                <Modal
+                    title="Confirm Clear"
+                    message="Are you sure you want to clear all tracked times? This action cannot be undone."
+                    onConfirm={confirmClear}
+                    onCancel={() => setShowClearConfirm(false)}
+                />
+            )}
+        </div>
     );
 }
