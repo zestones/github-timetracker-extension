@@ -1,5 +1,5 @@
 import { TimeService } from '../../utils/time.js';
-import { IconPlay, IconStop } from '../../icons.jsx';
+import { IconPlay, IconStop, IconExternalLink } from '../../icons.jsx';
 
 export function IssueRow({ issue, isActive, onStart, onStop, trackedSeconds = 0 }) {
     return (
@@ -9,17 +9,26 @@ export function IssueRow({ issue, isActive, onStart, onStop, trackedSeconds = 0 
                     <span className="text-slate-400 font-mono text-[11px]">#{issue.number}</span>
                     <span className="ml-1.5">{issue.title}</span>
                 </div>
-                {trackedSeconds > 0 && (
-                    <div className="text-[11px] text-slate-400 mt-0.5 font-mono">
-                        {TimeService.formatTime(trackedSeconds)}
-                    </div>
-                )}
+                <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                    {trackedSeconds > 0 && (
+                        <span className="font-mono">{TimeService.formatTime(trackedSeconds)}</span>
+                    )}
+                    <a
+                        href={`https://github.com${issue.issueUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-0.5 text-indigo-600 hover:text-indigo-700 transition-all opacity-0 group-hover:opacity-100"
+                    >
+                        <IconExternalLink size={10} />
+                        <span>View</span>
+                    </a>
+                </div>
             </div>
             <button
                 onClick={() => (isActive ? onStop(issue) : onStart(issue))}
                 className={`shrink-0 flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md cursor-pointer transition-all ${isActive
-                        ? 'bg-red-50 text-red-700 hover:bg-red-100'
-                        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 opacity-0 group-hover:opacity-100'
+                    ? 'bg-red-50 text-red-700 hover:bg-red-100'
+                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 opacity-0 group-hover:opacity-100'
                     }`}
             >
                 {isActive ? (
