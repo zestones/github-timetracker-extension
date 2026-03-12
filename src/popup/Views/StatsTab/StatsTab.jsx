@@ -66,8 +66,8 @@ export function StatsTab({ tracked }) {
                     <div
                         key={card.id}
                         className={`rounded-xl p-3 text-center cursor-pointer transition-all ${rangeMode === card.id
-                                ? `${colors[i].light} ring-1 ${colors[i].ring}`
-                                : 'bg-slate-50 hover:bg-slate-100'
+                            ? `${colors[i].light} ring-1 ${colors[i].ring}`
+                            : 'bg-slate-50 hover:bg-slate-100'
                             }`}
                         onClick={() => setRangeMode(card.id)}
                     >
@@ -85,9 +85,9 @@ export function StatsTab({ tracked }) {
             <div className="mb-4">
                 <button
                     onClick={() => setRangeMode(rangeMode === 'custom' ? 'today' : 'custom')}
-                    className={`flex items-center gap-1 text-[11px] cursor-pointer transition-colors font-medium ${rangeMode === 'custom'
-                            ? 'text-indigo-600'
-                            : 'text-slate-400 hover:text-slate-600'
+                    className={`flex items-center gap-1.5 text-[11px] cursor-pointer transition-all font-medium px-3 py-1.5 rounded-lg border ${rangeMode === 'custom'
+                        ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
+                        : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700'
                         }`}
                 >
                     {rangeMode === 'custom' ? (
