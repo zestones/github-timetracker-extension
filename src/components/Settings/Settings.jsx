@@ -1,10 +1,41 @@
 import { useState } from 'preact/hooks';
 import { GitHubStorageService } from '../../utils/github-storage.js';
+import { StorageService } from '../../utils/storage.js';
+import { STORAGE_KEYS } from '../../utils/constants.js';
+
+function exportCSV(tracked) {
+    const header = 'Issue URL,Title,Seconds,Date\n';
+    const rows = tracked.map((e) => {
+        const url = `https://github.com${e.issueUrl}`;
+        const title = (e.title || '').replace(/"/g, '""');
+        return `"${url}","${title}",${e.seconds},"${e.date}"`;
+    }).join('\n');
+    const csv = header + rows;
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `timetracker-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function exportJSON(tracked) {
+    const json = JSON.stringify(tracked, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `timetracker-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
 
 export function Settings({ token, maskedToken, onTokenChange, onClearData }) {
     const [isEditing, setIsEditing] = useState(false);
     const [tokenInput, setTokenInput] = useState('');
     const [tokenStatus, setTokenStatus] = useState(null);
+    const [exporting, setExporting] = useState(false);
 
     const handleSave = async () => {
         const isValid = await GitHubStorageService.validateGitHubToken(tokenInput);
@@ -87,13 +118,37 @@ export function Settings({ token, maskedToken, onTokenChange, onClearData }) {
                 </div>
             )}
 
-            <div className="mt-3 pt-2 border-t border-gray-100">
+            <div className="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between">
                 <button
                     onClick={onClearData}
                     className="text-xs text-red-500 hover:text-red-700 cursor-pointer"
                 >
                     🗑 Clear All Tracked Data
                 </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={async () => {
+                            setExporting(true);
+                            const tracked = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
+                            exportCSV(tracked);
+                            setExporting(false);
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer"
+                    >
+                        📤 CSV
+                    </button>
+                    <button
+                        onClick={async () => {
+                            setExporting(true);
+                            const tracked = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
+                            exportJSON(tracked);
+                            setExporting(false);
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer"
+                    >
+                        📤 JSON
+                    </button>
+                </div>
             </div>
         </div>
     );

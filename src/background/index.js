@@ -2,8 +2,55 @@
 import { StorageService } from '../utils/storage.js';
 import { GitHubService } from '../utils/github.js';
 import { GitHubStorageService } from '../utils/github-storage.js';
-import { STORAGE_KEYS } from '../utils/constants.js';
-import {IssueStorageService} from "../utils/issue-storage.js";
+import { STORAGE_KEYS, CACHE_REFRESH_INTERVAL } from '../utils/constants.js';
+import { IssueStorageService } from "../utils/issue-storage.js";
+import { CacheService } from '../utils/cache.js';
+
+async function refreshCachedIssues() {
+    const token = await GitHubStorageService.getGitHubToken();
+    if (!token) return;
+
+    const pinnedRepos = await CacheService.getPinnedRepos();
+    for (const repo of pinnedRepos) {
+        try {
+            const [owner, repoName] = repo.fullName.split('/');
+            const issues = await GitHubService.getRepoIssues(owner, repoName);
+            const simplified = issues.map((i) => ({
+                number: i.number,
+                title: i.title,
+                issueUrl: `/${repo.fullName}/issues/${i.number}`,
+                state: i.state,
+                labels: (i.labels || []).map((l) => l.name),
+                assignees: (i.assignees || []).map((a) => a.login),
+                user: i.user?.login || '',
+            }));
+            await CacheService.setCachedIssues(repo.fullName, simplified);
+        } catch (error) {
+            console.error(`Background refresh failed for ${repo.fullName}:`, error);
+        }
+    }
+
+    // Refresh user cache
+    try {
+        const user = await GitHubService.getUser();
+        await CacheService.setCachedUser({
+            login: user.login,
+            avatar_url: user.avatar_url,
+            name: user.name,
+        });
+    } catch (error) {
+        console.error('Background user refresh failed:', error);
+    }
+}
+
+// Set up periodic alarm for cache refresh
+chrome.alarms.create('refreshCache', { periodInMinutes: CACHE_REFRESH_INTERVAL });
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === 'refreshCache') {
+        refreshCachedIssues();
+    }
+});
 
 async function handleTimerStop(reason) {
     const { activeIssue, startTime, trackedTimes } = await StorageService.getMultiple([

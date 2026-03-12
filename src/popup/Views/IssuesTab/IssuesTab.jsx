@@ -17,6 +17,8 @@ export function IssuesTab() {
     const [loading, setLoading] = useState({});
     const [showPinModal, setShowPinModal] = useState(false);
     const [activeIssue, setActiveIssue] = useState(null);
+    const [filter, setFilter] = useState('all'); // 'all' | 'assigned' | 'created'
+    const [currentUser, setCurrentUser] = useState(null);
 
     const tracked = useStorageListener(STORAGE_KEYS.TRACKED_TIMES, []);
 
@@ -25,6 +27,20 @@ export function IssuesTab() {
         const load = async () => {
             const repos = await CacheService.getPinnedRepos();
             setPinnedRepos(repos);
+
+            // Load cached user
+            const cachedUser = await CacheService.getCachedUser();
+            if (cachedUser) {
+                setCurrentUser(cachedUser.login);
+            } else {
+                try {
+                    const user = await GitHubService.getUser();
+                    await CacheService.setCachedUser({ login: user.login, avatar_url: user.avatar_url, name: user.name });
+                    setCurrentUser(user.login);
+                } catch (e) {
+                    console.error('Failed to fetch user:', e);
+                }
+            }
 
             const expanded = {};
             repos.forEach((r) => (expanded[r.fullName] = true));
@@ -70,6 +86,8 @@ export function IssuesTab() {
                 issueUrl: `/${repo.fullName}/issues/${i.number}`,
                 state: i.state,
                 labels: (i.labels || []).map((l) => l.name),
+                assignees: (i.assignees || []).map((a) => a.login),
+                user: i.user?.login || '',
             }));
             await CacheService.setCachedIssues(repo.fullName, simplified);
             setRepoIssues((prev) => ({ ...prev, [repo.fullName]: simplified }));
@@ -102,6 +120,14 @@ export function IssuesTab() {
         chrome.runtime.sendMessage({ action: 'timerStopped', issueUrl: issue.issueUrl });
     };
 
+    // Filter issues by assignee/creator
+    const filterIssue = (issue) => {
+        if (!currentUser || filter === 'all') return true;
+        if (filter === 'assigned') return (issue.assignees || []).includes(currentUser);
+        if (filter === 'created') return issue.user === currentUser;
+        return true;
+    };
+
     // Search across all repos
     const allFilteredIssues = useMemo(() => {
         if (!searchTerm) return null;
@@ -109,6 +135,7 @@ export function IssuesTab() {
         const all = [];
         for (const [fullName, issues] of Object.entries(repoIssues)) {
             for (const issue of issues || []) {
+                if (!filterIssue(issue)) continue;
                 if (
                     issue.title.toLowerCase().includes(term) ||
                     `#${issue.number}`.includes(term) ||
@@ -119,12 +146,12 @@ export function IssuesTab() {
             }
         }
         return all;
-    }, [searchTerm, repoIssues]);
+    }, [searchTerm, repoIssues, filter, currentUser]);
 
     return (
         <div>
             {/* Search */}
-            <div className="mb-3">
+            <div className="mb-2">
                 <input
                     type="text"
                     placeholder="Search issues across pinned repos..."
@@ -132,6 +159,26 @@ export function IssuesTab() {
                     onInput={(e) => setSearchTerm(e.target.value)}
                     className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
+            </div>
+
+            {/* Filter bar */}
+            <div className="flex gap-1 mb-3">
+                {[
+                    { id: 'all', label: 'All' },
+                    { id: 'assigned', label: 'Assigned to me' },
+                    { id: 'created', label: 'Created by me' },
+                ].map((f) => (
+                    <button
+                        key={f.id}
+                        onClick={() => setFilter(f.id)}
+                        className={`text-xs px-2 py-0.5 rounded-full cursor-pointer transition-colors ${filter === f.id
+                                ? 'bg-blue-100 text-blue-700 font-medium'
+                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            }`}
+                    >
+                        {f.label}
+                    </button>
+                ))}
             </div>
 
             {/* Search results */}
@@ -246,12 +293,12 @@ export function IssuesTab() {
                                         <div className="text-xs text-gray-400 py-2 pl-1">
                                             Fetching issues...
                                         </div>
-                                    ) : (repoIssues[repo.fullName] || []).length === 0 ? (
+                                    ) : (repoIssues[repo.fullName] || []).filter(filterIssue).length === 0 ? (
                                         <div className="text-xs text-gray-400 py-2 pl-1">
-                                            No open issues
+                                            {filter === 'all' ? 'No open issues' : 'No matching issues'}
                                         </div>
                                     ) : (
-                                        (repoIssues[repo.fullName] || []).map((issue) => (
+                                        (repoIssues[repo.fullName] || []).filter(filterIssue).map((issue) => (
                                             <IssueRow
                                                 key={issue.issueUrl}
                                                 issue={issue}

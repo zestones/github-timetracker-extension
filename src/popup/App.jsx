@@ -11,6 +11,8 @@ import { StorageService } from '../utils/storage.js';
 import { IssueStorageService } from '../utils/issue-storage.js';
 import { STORAGE_KEYS } from '../utils/constants.js';
 import { useStorageListener } from '../hooks/useStorageListener.js';
+import { CacheService } from '../utils/cache.js';
+import { GitHubService } from '../utils/github.js';
 import './App.css';
 
 export function App() {
@@ -22,6 +24,7 @@ export function App() {
     const [tokenLoaded, setTokenLoaded] = useState(false);
     const [tokenInput, setTokenInput] = useState('');
     const [tokenError, setTokenError] = useState('');
+    const [user, setUser] = useState(null);
 
     const tracked = useStorageListener(STORAGE_KEYS.TRACKED_TIMES, []);
 
@@ -31,6 +34,21 @@ export function App() {
             if (savedToken) {
                 setToken(savedToken);
                 setMaskedToken(savedToken.slice(0, 4) + '••••••••');
+
+                // Load user avatar
+                const cachedUser = await CacheService.getCachedUser();
+                if (cachedUser) {
+                    setUser(cachedUser);
+                } else {
+                    try {
+                        const userData = await GitHubService.getUser();
+                        const userInfo = { login: userData.login, avatar_url: userData.avatar_url, name: userData.name };
+                        await CacheService.setCachedUser(userInfo);
+                        setUser(userInfo);
+                    } catch (e) {
+                        console.error('Failed to fetch user:', e);
+                    }
+                }
             }
             setTokenLoaded(true);
         };
@@ -41,8 +59,15 @@ export function App() {
         setToken(newToken);
         if (newToken) {
             setMaskedToken(newToken.slice(0, 4) + '••••••••');
+            // Refresh user on token change
+            GitHubService.getUser().then(async (userData) => {
+                const userInfo = { login: userData.login, avatar_url: userData.avatar_url, name: userData.name };
+                await CacheService.setCachedUser(userInfo);
+                setUser(userInfo);
+            }).catch(() => setUser(null));
         } else {
             setMaskedToken('no token');
+            setUser(null);
         }
     };
 
@@ -98,13 +123,23 @@ export function App() {
             {/* Header */}
             <div className="flex items-center justify-between px-3 py-2.5 border-b border-gray-200">
                 <h1 className="text-sm font-semibold text-gray-800">⏱️ GitHub Time Tracker</h1>
-                <button
-                    onClick={() => setShowSettings(!showSettings)}
-                    className={`text-base cursor-pointer transition-colors ${showSettings ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
-                        }`}
-                >
-                    ⚙
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowSettings(!showSettings)}
+                        className={`text-base cursor-pointer transition-colors ${showSettings ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+                            }`}
+                    >
+                        ⚙
+                    </button>
+                    {user?.avatar_url && (
+                        <img
+                            src={user.avatar_url}
+                            alt={user.login}
+                            title={user.login}
+                            className="w-6 h-6 rounded-full"
+                        />
+                    )}
+                </div>
             </div>
 
             {/* Active Timer */}

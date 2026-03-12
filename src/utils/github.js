@@ -67,4 +67,18 @@ export class GitHubService {
         // Filter out pull requests (GitHub API returns PRs in /issues endpoint)
         return issues.filter((issue) => !issue.pull_request);
     }
+
+    static async getAssignedIssues() {
+        const issues = await this.apiRequest(
+            '/issues?filter=assigned&state=open&per_page=100&sort=updated'
+        );
+        return issues.filter((issue) => !issue.pull_request);
+    }
+
+    static async getCreatedIssues() {
+        const issues = await this.apiRequest(
+            '/issues?filter=created&state=open&per_page=100&sort=updated'
+        );
+        return issues.filter((issue) => !issue.pull_request);
+    }
 }
