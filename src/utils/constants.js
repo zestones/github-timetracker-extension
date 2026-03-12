@@ -7,6 +7,7 @@ export const STORAGE_KEYS = {
     ISSUES: 'issues',
     PINNED_REPOS: 'pinnedRepos',
     CACHED_USER: 'cachedUser',
+    THEME: 'theme',
 };
 export const CACHE_PREFIX = 'cache:';
 export const CACHE_TTL = 5 * 60 * 1000; // 5 minutes

@@ -103,21 +103,21 @@ export function ActiveTimer() {
     if (!activeIssue || !startTime) return null;
 
     return (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-emerald-50 border-b border-emerald-100 shrink-0">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-dot shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-success-subtle border-b border-success-border shrink-0">
+            <div className="w-2 h-2 rounded-full bg-success-dot animate-pulse-dot shrink-0" />
             <div className="flex-1 min-w-0">
-                <div className="text-[11px] text-emerald-700/70 truncate">
+                <div className="text-[11px] text-success-muted truncate">
                     {issueInfo?.fullRepo} #{issueInfo?.issueNumber}
                 </div>
-                <div className="text-[13px] font-medium text-emerald-900 truncate">
+                <div className="text-[13px] font-medium text-success-text truncate">
                     {issueInfo?.title || 'Untitled'}
                 </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-                <span className="text-sm font-mono font-semibold text-emerald-800 tabular-nums">{elapsed}</span>
+                <span className="text-sm font-mono font-semibold text-success-text tabular-nums">{elapsed}</span>
                 <button
                     onClick={handleStop}
-                    className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white text-[11px] font-medium pl-1.5 pr-2 py-1 rounded-md cursor-pointer transition-colors"
+                    className="flex items-center gap-1 bg-danger-muted hover:bg-danger-hover text-white text-[11px] font-medium pl-1.5 pr-2 py-1 rounded-md cursor-pointer transition-colors"
                 >
                     <IconStop size={10} />
                     Stop

@@ -178,16 +178,16 @@ export function CalendarView({ tracked }) {
       <div className="flex justify-between items-center mb-3">
         <button
           onClick={prevMonth}
-          className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+          className="p-1 text-muted hover:text-secondary hover:bg-surface rounded-lg cursor-pointer transition-colors"
         >
           <IconChevronLeft size={16} />
         </button>
-        <span className="text-[13px] font-semibold text-slate-900">
+        <span className="text-[13px] font-semibold text-primary">
           {currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' })}
         </span>
         <button
           onClick={nextMonth}
-          className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
+          className="p-1 text-muted hover:text-secondary hover:bg-surface rounded-lg cursor-pointer transition-colors"
         >
           <IconChevronRight size={16} />
         </button>
@@ -196,7 +196,7 @@ export function CalendarView({ tracked }) {
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-0.5 text-center mb-4">
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-          <div key={i} className="text-[10px] font-medium text-slate-400 py-1">{day}</div>
+          <div key={i} className="text-[10px] font-medium text-muted py-1">{day}</div>
         ))}
         {paddingDays.map((_, i) => (
           <div key={`pad-${i}`} className="h-8" />
@@ -209,12 +209,12 @@ export function CalendarView({ tracked }) {
             <div
               key={day}
               className={`h-8 flex items-center justify-center rounded-lg text-[12px] transition-colors ${selected
-                  ? 'bg-indigo-600 text-white font-medium cursor-pointer'
-                  : tracked
-                    ? 'bg-indigo-50 text-indigo-700 cursor-pointer hover:bg-indigo-100 font-medium'
-                    : today
-                      ? 'text-slate-900 font-medium'
-                      : 'text-slate-300'
+                ? 'bg-accent text-white font-medium cursor-pointer'
+                : tracked
+                  ? 'bg-accent-subtle text-accent-text cursor-pointer hover:bg-accent-ring font-medium'
+                  : today
+                    ? 'text-primary font-medium'
+                    : 'text-faint'
                 } ${tracked || today ? 'cursor-pointer' : ''}`}
               onClick={() => (tracked || today) && selectDay(day)}
             >
@@ -225,19 +225,19 @@ export function CalendarView({ tracked }) {
       </div>
 
       {/* Selected day summary */}
-      <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-100">
-        <div className="text-[13px] text-slate-700 font-medium">
+      <div className="flex items-center justify-between mb-3 pb-3 border-b border-border-subtle">
+        <div className="text-[13px] text-secondary font-medium">
           {selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
         </div>
-        <div className="flex items-center gap-1 text-[13px] font-mono font-semibold text-slate-900 tabular-nums">
-          <IconClock size={13} className="text-slate-400" />
+        <div className="flex items-center gap-1 text-[13px] font-mono font-semibold text-primary tabular-nums">
+          <IconClock size={13} className="text-muted" />
           {selectedDayTotalTime}
         </div>
       </div>
 
       {/* Search */}
       <div className="relative mb-3">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">
           <IconSearch size={13} />
         </div>
         <input
@@ -245,13 +245,13 @@ export function CalendarView({ tracked }) {
           placeholder="Search entries..."
           value={searchTerm}
           onInput={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-8 pr-3 py-1.5 text-[13px] bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-900 placeholder:text-slate-400"
+          className="w-full pl-8 pr-3 py-1.5 text-[13px] bg-surface border border-border-default rounded-lg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary placeholder:text-muted"
         />
       </div>
 
       {/* Entries */}
       {entries.length === 0 ? (
-        <div className="text-[13px] text-slate-400 text-center py-6">
+        <div className="text-[13px] text-muted text-center py-6">
           No entries for this day
         </div>
       ) : (

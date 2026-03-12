@@ -10,6 +10,7 @@ import { StorageService } from '../utils/storage.js';
 import { IssueStorageService } from '../utils/issue-storage.js';
 import { STORAGE_KEYS } from '../utils/constants.js';
 import { useStorageListener } from '../hooks/useStorageListener.js';
+import { useTheme } from '../hooks/useTheme.js';
 import { CacheService } from '../utils/cache.js';
 import { GitHubService } from '../utils/github.js';
 import { IconIssues, IconChart, IconCalendar, IconSettings, IconGitHub } from '../icons.jsx';
@@ -26,6 +27,7 @@ export function App() {
     const [user, setUser] = useState(null);
 
     const tracked = useStorageListener(STORAGE_KEYS.TRACKED_TIMES, []);
+    const { theme, isDark, setTheme } = useTheme();
 
     useEffect(() => {
         const loadToken = async () => {
@@ -90,12 +92,12 @@ export function App() {
 
     if (!token) {
         return (
-            <div className="w-[400px] h-[560px] flex flex-col items-center justify-center px-10 font-['Inter',system-ui,sans-serif] bg-white">
-                <div className="text-slate-900 mb-5">
+            <div className={`w-100 h-140 flex flex-col items-center justify-center px-10 font-['Inter',system-ui,sans-serif] bg-base ${isDark ? 'dark' : ''}`}>
+                <div className="text-primary mb-5">
                     <IconGitHub size={48} />
                 </div>
-                <h1 className="text-xl font-semibold text-slate-900 mb-1">Time Tracker</h1>
-                <p className="text-[13px] text-slate-500 text-center mb-8 leading-relaxed">
+                <h1 className="text-xl font-semibold text-primary mb-1">Time Tracker</h1>
+                <p className="text-[13px] text-tertiary text-center mb-8 leading-relaxed">
                     Track time spent on GitHub issues<br />directly from your browser.
                 </p>
                 <div className="w-full">
@@ -104,18 +106,18 @@ export function App() {
                         value={tokenInput}
                         onInput={(e) => setTokenInput(e.target.value)}
                         placeholder="GitHub Personal Access Token"
-                        className="w-full px-3.5 py-2.5 text-[13px] bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-900 placeholder:text-slate-400 mb-2"
+                        className="w-full px-3.5 py-2.5 text-[13px] bg-surface border border-border-default rounded-lg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary placeholder:text-muted mb-2"
                     />
-                    {tokenError && <p className="text-[11px] text-red-600 mb-2">{tokenError}</p>}
+                    {tokenError && <p className="text-[11px] text-danger-text mb-2">{tokenError}</p>}
                     <button
                         onClick={handleSaveToken}
-                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-medium py-2.5 rounded-lg cursor-pointer transition-colors"
+                        className="w-full bg-accent hover:bg-accent-hover text-white text-[13px] font-medium py-2.5 rounded-lg cursor-pointer transition-colors"
                     >
                         Connect
                     </button>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-6 text-center">
-                    Requires a token with <span className="font-medium text-slate-500">repo</span> scope.
+                <p className="text-[11px] text-muted mt-6 text-center">
+                    Requires a token with <span className="font-medium text-tertiary">repo</span> scope.
                 </p>
             </div>
         );
@@ -129,19 +131,19 @@ export function App() {
     ];
 
     return (
-        <div className="w-[400px] h-[560px] flex flex-col font-['Inter',system-ui,sans-serif] bg-white overflow-hidden">
+        <div className={`w-100 h-140 flex flex-col font-['Inter',system-ui,sans-serif] bg-base overflow-hidden ${isDark ? 'dark' : ''}`}>
             {/* Header */}
-            <header className="flex items-center justify-between px-4 h-11 border-b border-slate-100 shrink-0">
-                <h1 className="text-[13px] font-semibold text-slate-900 tracking-tight">Time Tracker</h1>
+            <header className="flex items-center justify-between px-4 h-11 border-b border-border-subtle shrink-0">
+                <h1 className="text-[13px] font-semibold text-primary tracking-tight">Time Tracker</h1>
                 {user?.avatar_url ? (
                     <img
                         src={user.avatar_url}
                         alt={user.login}
                         title={user.login}
-                        className="w-6 h-6 rounded-full ring-1 ring-slate-200"
+                        className="w-6 h-6 rounded-full ring-1 ring-ring-default"
                     />
                 ) : (
-                    <div className="w-6 h-6 rounded-full bg-slate-100" />
+                    <div className="w-6 h-6 rounded-full bg-surface" />
                 )}
             </header>
 
@@ -160,17 +162,19 @@ export function App() {
                         user={user}
                         onTokenChange={handleTokenChange}
                         onClearData={() => setShowClearConfirm(true)}
+                        theme={theme}
+                        onThemeChange={setTheme}
                     />
                 )}
             </main>
 
             {/* Bottom Navigation */}
-            <nav className="flex items-center border-t border-slate-100 shrink-0">
+            <nav className="flex items-center border-t border-border-subtle shrink-0">
                 {navItems.map(({ id, icon: Icon, label }) => (
                     <button
                         key={id}
                         onClick={() => setPage(id)}
-                        className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 cursor-pointer transition-colors ${page === id ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'
+                        className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 cursor-pointer transition-colors ${page === id ? 'text-accent' : 'text-muted hover:text-secondary'
                             }`}
                     >
                         <Icon size={18} />

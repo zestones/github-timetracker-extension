@@ -47,9 +47,9 @@ export function StatsTab({ tracked }) {
     );
 
     const colors = [
-        { bg: 'bg-indigo-500', light: 'bg-indigo-50', ring: 'ring-indigo-200', text: 'text-indigo-600', value: 'text-indigo-900' },
-        { bg: 'bg-violet-500', light: 'bg-violet-50', ring: 'ring-violet-200', text: 'text-violet-600', value: 'text-violet-900' },
-        { bg: 'bg-amber-500', light: 'bg-amber-50', ring: 'ring-amber-200', text: 'text-amber-600', value: 'text-amber-900' },
+        { bg: 'bg-accent', light: 'bg-accent-subtle', ring: 'ring-accent-ring', text: 'text-accent-text', value: 'text-accent' },
+        { bg: 'bg-violet-text', light: 'bg-violet-subtle', ring: 'ring-violet-ring', text: 'text-violet-text', value: 'text-violet-value' },
+        { bg: 'bg-amber-text', light: 'bg-amber-subtle', ring: 'ring-amber-ring', text: 'text-amber-text', value: 'text-amber-value' },
     ];
 
     const cards = [
@@ -67,14 +67,14 @@ export function StatsTab({ tracked }) {
                         key={card.id}
                         className={`rounded-xl p-3 text-center cursor-pointer transition-all ${rangeMode === card.id
                             ? `${colors[i].light} ring-1 ${colors[i].ring}`
-                            : 'bg-slate-50 hover:bg-slate-100'
+                            : 'bg-surface hover:bg-raised'
                             }`}
                         onClick={() => setRangeMode(card.id)}
                     >
-                        <div className={`text-[11px] font-medium ${rangeMode === card.id ? colors[i].text : 'text-slate-500'}`}>
+                        <div className={`text-[11px] font-medium ${rangeMode === card.id ? colors[i].text : 'text-tertiary'}`}>
                             {card.label}
                         </div>
-                        <div className={`text-[14px] font-bold mt-0.5 font-mono tabular-nums ${rangeMode === card.id ? colors[i].value : 'text-slate-700'}`}>
+                        <div className={`text-[14px] font-bold mt-0.5 font-mono tabular-nums ${rangeMode === card.id ? colors[i].value : 'text-secondary'}`}>
                             {TimeService.formatTime(card.seconds)}
                         </div>
                     </div>
@@ -86,8 +86,8 @@ export function StatsTab({ tracked }) {
                 <button
                     onClick={() => setRangeMode(rangeMode === 'custom' ? 'today' : 'custom')}
                     className={`flex items-center gap-1.5 text-[11px] cursor-pointer transition-all font-medium px-3 py-1.5 rounded-lg border ${rangeMode === 'custom'
-                        ? 'bg-indigo-50 text-indigo-600 border-indigo-200'
-                        : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-700'
+                        ? 'bg-accent-subtle text-accent border-accent-ring'
+                        : 'bg-surface text-tertiary border-border-default hover:bg-raised hover:text-secondary'
                         }`}
                 >
                     {rangeMode === 'custom' ? (
@@ -102,14 +102,14 @@ export function StatsTab({ tracked }) {
                             type="date"
                             value={customStart}
                             onInput={(e) => setCustomStart(e.target.value)}
-                            className="text-[12px] border border-slate-200 rounded-lg px-2.5 py-1.5 flex-1 bg-slate-50 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                            className="text-[12px] border border-border-default rounded-lg px-2.5 py-1.5 flex-1 bg-surface focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary"
                         />
-                        <span className="text-slate-300 text-[11px]">to</span>
+                        <span className="text-faint text-[11px]">to</span>
                         <input
                             type="date"
                             value={customEnd}
                             onInput={(e) => setCustomEnd(e.target.value)}
-                            className="text-[12px] border border-slate-200 rounded-lg px-2.5 py-1.5 flex-1 bg-slate-50 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                            className="text-[12px] border border-border-default rounded-lg px-2.5 py-1.5 flex-1 bg-surface focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary"
                         />
                     </div>
                 )}
@@ -117,11 +117,11 @@ export function StatsTab({ tracked }) {
 
             {/* Per-repo breakdown */}
             <div>
-                <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-3">
+                <div className="text-[11px] font-medium text-muted uppercase tracking-wider mb-3">
                     Per-Repo Breakdown
                 </div>
                 {repoBreakdown.length === 0 ? (
-                    <div className="text-[13px] text-slate-400 text-center py-8">
+                    <div className="text-[13px] text-muted text-center py-8">
                         No tracked time in this period
                     </div>
                 ) : (
@@ -131,12 +131,12 @@ export function StatsTab({ tracked }) {
                         return (
                             <div key={repo} className="mb-3">
                                 <div className="flex justify-between mb-1">
-                                    <span className="text-[13px] text-slate-700 truncate flex-1 font-medium">{repo}</span>
-                                    <span className="text-[11px] text-slate-400 shrink-0 ml-2 font-mono tabular-nums">
+                                    <span className="text-[13px] text-secondary truncate flex-1 font-medium">{repo}</span>
+                                    <span className="text-[11px] text-muted shrink-0 ml-2 font-mono tabular-nums">
                                         {formatted} ({percentage}%)
                                     </span>
                                 </div>
-                                <div className="w-full bg-slate-100 rounded-full h-1.5">
+                                <div className="w-full bg-raised rounded-full h-1.5">
                                     <div
                                         className={`${barColors[i % barColors.length]} h-1.5 rounded-full transition-all duration-500`}
                                         style={{ width: `${(seconds / maxSeconds) * 100}%` }}
@@ -150,9 +150,9 @@ export function StatsTab({ tracked }) {
 
             {/* Total */}
             {totalFiltered > 0 && (
-                <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-                    <span className="text-[11px] text-slate-400">Total tracked: </span>
-                    <span className="text-[13px] font-semibold text-slate-700 font-mono tabular-nums">
+                <div className="mt-4 pt-3 border-t border-border-subtle text-center">
+                    <span className="text-[11px] text-muted">Total tracked: </span>
+                    <span className="text-[13px] font-semibold text-secondary font-mono tabular-nums">
                         {TimeService.formatTime(totalFiltered)}
                     </span>
                 </div>

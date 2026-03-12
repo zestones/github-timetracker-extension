@@ -47,19 +47,19 @@ export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
 
     return (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div className="bg-white rounded-xl w-[360px] max-h-[400px] shadow-2xl shadow-black/20 flex flex-col overflow-hidden">
+            <div className="bg-surface rounded-xl w-90 max-h-100 shadow-2xl shadow-black/20 flex flex-col overflow-hidden">
                 <div className="px-4 pt-4 pb-3">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-[14px] font-semibold text-slate-900">Pin a Repository</h3>
+                        <h3 className="text-[14px] font-semibold text-primary">Pin a Repository</h3>
                         <button
                             onClick={onClose}
-                            className="text-slate-400 hover:text-slate-600 cursor-pointer p-0.5 rounded-md hover:bg-slate-100 transition-colors"
+                            className="text-muted hover:text-secondary cursor-pointer p-0.5 rounded-md hover:bg-raised transition-colors"
                         >
                             <IconX size={16} />
                         </button>
                     </div>
                     <div className="relative">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">
                             <IconSearch size={14} />
                         </div>
                         <input
@@ -68,29 +68,29 @@ export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
                             placeholder="Search repositories..."
                             value={query}
                             onInput={(e) => handleSearch(e.target.value)}
-                            className="w-full pl-8 pr-3 py-2 text-[13px] bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-900 placeholder:text-slate-400"
+                            className="w-full pl-8 pr-3 py-2 text-[13px] bg-raised border border-border-default rounded-lg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary placeholder:text-muted"
                         />
                     </div>
                 </div>
                 <div className="overflow-y-auto flex-1 px-2 pb-3 popup-scroll">
                     {searching && (
-                        <div className="text-[13px] text-slate-400 text-center py-8">Searching...</div>
+                        <div className="text-[13px] text-muted text-center py-8">Searching...</div>
                     )}
                     {!searching && query && results.length === 0 && (
-                        <div className="text-[13px] text-slate-400 text-center py-8">No repositories found</div>
+                        <div className="text-[13px] text-muted text-center py-8">No repositories found</div>
                     )}
                     {!searching &&
                         results.map((repo) => (
                             <div
                                 key={repo.fullName}
-                                className="flex items-center gap-2 p-2.5 hover:bg-slate-50 rounded-lg transition-colors"
+                                className="flex items-center gap-2 p-2.5 hover:bg-raised rounded-lg transition-colors"
                             >
                                 <div className="flex-1 min-w-0">
-                                    <div className="text-[13px] font-medium text-slate-900 truncate">
+                                    <div className="text-[13px] font-medium text-primary truncate">
                                         {repo.fullName}
                                     </div>
                                     {repo.description && (
-                                        <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                                        <div className="text-[11px] text-muted truncate mt-0.5">
                                             {repo.description}
                                         </div>
                                     )}
@@ -103,8 +103,8 @@ export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
                                     }}
                                     disabled={isPinned(repo.fullName)}
                                     className={`shrink-0 flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-md cursor-pointer transition-colors ${isPinned(repo.fullName)
-                                            ? 'bg-slate-100 text-slate-400 cursor-default'
-                                            : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                                        ? 'bg-raised text-muted cursor-default'
+                                        : 'bg-accent-subtle text-accent-text hover:bg-accent-ring'
                                         }`}
                                 >
                                     {isPinned(repo.fullName) ? (
