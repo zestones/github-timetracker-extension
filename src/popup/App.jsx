@@ -2,7 +2,6 @@ import { useState, useEffect } from 'preact/hooks';
 import { ActiveTimer } from '../components/ActiveTimer/ActiveTimer.jsx';
 import { IssuesTab } from './Views/IssuesTab/IssuesTab.jsx';
 import { StatsTab } from './Views/StatsTab/StatsTab.jsx';
-import { HistoryView } from './Views/TrackedList/HistoryView.jsx';
 import { CalendarView } from './Views/TrackedList/CalendarView.jsx';
 import { Settings } from '../components/Settings/Settings.jsx';
 import { Modal } from '../components/Modal/Modal.jsx';
@@ -13,13 +12,13 @@ import { STORAGE_KEYS } from '../utils/constants.js';
 import { useStorageListener } from '../hooks/useStorageListener.js';
 import { CacheService } from '../utils/cache.js';
 import { GitHubService } from '../utils/github.js';
+import { IconIssues, IconChart, IconCalendar, IconSettings, IconGitHub } from '../icons.jsx';
 import './App.css';
 
 export function App() {
     const [token, setToken] = useState('');
     const [maskedToken, setMaskedToken] = useState('no token');
-    const [activeTab, setActiveTab] = useState('issues');
-    const [showSettings, setShowSettings] = useState(false);
+    const [page, setPage] = useState('issues');
     const [showClearConfirm, setShowClearConfirm] = useState(false);
     const [tokenLoaded, setTokenLoaded] = useState(false);
     const [tokenInput, setTokenInput] = useState('');
@@ -35,7 +34,6 @@ export function App() {
                 setToken(savedToken);
                 setMaskedToken(savedToken.slice(0, 4) + '••••••••');
 
-                // Load user avatar
                 const cachedUser = await CacheService.getCachedUser();
                 if (cachedUser) {
                     setUser(cachedUser);
@@ -59,7 +57,6 @@ export function App() {
         setToken(newToken);
         if (newToken) {
             setMaskedToken(newToken.slice(0, 4) + '••••••••');
-            // Refresh user on token change
             GitHubService.getUser().then(async (userData) => {
                 const userInfo = { login: userData.login, avatar_url: userData.avatar_url, name: userData.name };
                 await CacheService.setCachedUser(userInfo);
@@ -75,8 +72,7 @@ export function App() {
         const isValid = await GitHubStorageService.validateGitHubToken(tokenInput);
         if (isValid) {
             await GitHubStorageService.setGitHubToken(tokenInput);
-            setToken(tokenInput);
-            setMaskedToken(tokenInput.slice(0, 4) + '••••••••');
+            handleTokenChange(tokenInput);
             setTokenInput('');
             setTokenError('');
         } else {
@@ -92,124 +88,103 @@ export function App() {
 
     if (!tokenLoaded) return null;
 
-    // Token setup screen
     if (!token) {
         return (
-            <div className="w-[420px] p-6 font-['Inter',sans-serif]">
-                <h1 className="text-lg font-semibold text-center mb-2">⏱️ GitHub Time Tracker</h1>
-                <p className="text-sm text-gray-500 text-center mb-4">
-                    Enter your GitHub Personal Access Token to get started.
+            <div className="w-[400px] h-[560px] flex flex-col items-center justify-center px-10 font-['Inter',system-ui,sans-serif] bg-white">
+                <div className="text-slate-900 mb-5">
+                    <IconGitHub size={48} />
+                </div>
+                <h1 className="text-xl font-semibold text-slate-900 mb-1">Time Tracker</h1>
+                <p className="text-[13px] text-slate-500 text-center mb-8 leading-relaxed">
+                    Track time spent on GitHub issues<br />directly from your browser.
                 </p>
-                <input
-                    type="password"
-                    value={tokenInput}
-                    onInput={(e) => setTokenInput(e.target.value)}
-                    placeholder="ghp_xxxxxxxxxxxx"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 mb-2"
-                />
-                {tokenError && <div className="text-xs text-red-500 mb-2">{tokenError}</div>}
-                <button
-                    onClick={handleSaveToken}
-                    className="w-full bg-green-600 text-white text-sm font-medium py-2 rounded-md hover:bg-green-700 cursor-pointer transition-colors"
-                >
-                    Save Token
-                </button>
+                <div className="w-full">
+                    <input
+                        type="password"
+                        value={tokenInput}
+                        onInput={(e) => setTokenInput(e.target.value)}
+                        placeholder="GitHub Personal Access Token"
+                        className="w-full px-3.5 py-2.5 text-[13px] bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-900 placeholder:text-slate-400 mb-2"
+                    />
+                    {tokenError && <p className="text-[11px] text-red-600 mb-2">{tokenError}</p>}
+                    <button
+                        onClick={handleSaveToken}
+                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-medium py-2.5 rounded-lg cursor-pointer transition-colors"
+                    >
+                        Connect
+                    </button>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-6 text-center">
+                    Requires a token with <span className="font-medium text-slate-500">repo</span> scope.
+                </p>
             </div>
         );
     }
 
+    const navItems = [
+        { id: 'issues', icon: IconIssues, label: 'Issues' },
+        { id: 'stats', icon: IconChart, label: 'Stats' },
+        { id: 'calendar', icon: IconCalendar, label: 'Calendar' },
+        { id: 'settings', icon: IconSettings, label: 'Settings' },
+    ];
+
     return (
-        <div className="w-[420px] font-['Inter',sans-serif]">
+        <div className="w-[400px] h-[560px] flex flex-col font-['Inter',system-ui,sans-serif] bg-white overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-3 py-2.5 border-b border-gray-200">
-                <h1 className="text-sm font-semibold text-gray-800">⏱️ GitHub Time Tracker</h1>
-                <div className="flex items-center gap-2">
+            <header className="flex items-center justify-between px-4 h-11 border-b border-slate-100 shrink-0">
+                <h1 className="text-[13px] font-semibold text-slate-900 tracking-tight">Time Tracker</h1>
+                {user?.avatar_url ? (
+                    <img
+                        src={user.avatar_url}
+                        alt={user.login}
+                        title={user.login}
+                        className="w-6 h-6 rounded-full ring-1 ring-slate-200"
+                    />
+                ) : (
+                    <div className="w-6 h-6 rounded-full bg-slate-100" />
+                )}
+            </header>
+
+            {/* Active Timer Banner */}
+            <ActiveTimer />
+
+            {/* Page Content */}
+            <main className="flex-1 overflow-y-auto popup-scroll">
+                {page === 'issues' && <IssuesTab />}
+                {page === 'stats' && <StatsTab tracked={tracked} />}
+                {page === 'calendar' && <CalendarView tracked={tracked} />}
+                {page === 'settings' && (
+                    <Settings
+                        token={token}
+                        maskedToken={maskedToken}
+                        user={user}
+                        onTokenChange={handleTokenChange}
+                        onClearData={() => setShowClearConfirm(true)}
+                    />
+                )}
+            </main>
+
+            {/* Bottom Navigation */}
+            <nav className="flex items-center border-t border-slate-100 shrink-0">
+                {navItems.map(({ id, icon: Icon, label }) => (
                     <button
-                        onClick={() => setShowSettings(!showSettings)}
-                        className={`text-base cursor-pointer transition-colors ${showSettings ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+                        key={id}
+                        onClick={() => setPage(id)}
+                        className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 cursor-pointer transition-colors ${page === id ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-600'
                             }`}
                     >
-                        ⚙
+                        <Icon size={18} />
+                        <span className="text-[10px] font-medium">{label}</span>
                     </button>
-                    {user?.avatar_url && (
-                        <img
-                            src={user.avatar_url}
-                            alt={user.login}
-                            title={user.login}
-                            className="w-6 h-6 rounded-full"
-                        />
-                    )}
-                </div>
-            </div>
+                ))}
+            </nav>
 
-            {/* Active Timer */}
-            <div className="px-3 pt-3">
-                <ActiveTimer />
-            </div>
-
-            {/* Tab bar */}
-            <div className="flex gap-1 px-3 py-1.5 border-b border-gray-100">
-                <button
-                    className={`text-sm px-3 py-1 rounded-md cursor-pointer transition-colors ${activeTab === 'issues'
-                        ? 'bg-gray-100 font-medium text-gray-900'
-                        : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                    onClick={() => setActiveTab('issues')}
-                >
-                    Issues
-                </button>
-                <button
-                    className={`text-sm px-3 py-1 rounded-md cursor-pointer transition-colors ${activeTab === 'stats'
-                        ? 'bg-gray-100 font-medium text-gray-900'
-                        : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                    onClick={() => setActiveTab('stats')}
-                >
-                    Stats
-                </button>
-                <button
-                    className={`text-sm px-3 py-1 rounded-md cursor-pointer transition-colors ${activeTab === 'history'
-                        ? 'bg-gray-100 font-medium text-gray-900'
-                        : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                    onClick={() => setActiveTab('history')}
-                >
-                    History
-                </button>
-                <button
-                    className={`text-sm px-3 py-1 rounded-md cursor-pointer transition-colors ${activeTab === 'calendar'
-                        ? 'bg-gray-100 font-medium text-gray-900'
-                        : 'text-gray-500 hover:text-gray-700'
-                        }`}
-                    onClick={() => setActiveTab('calendar')}
-                >
-                    Calendar
-                </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-3 max-h-[380px] overflow-y-auto">
-                {activeTab === 'issues' && <IssuesTab />}
-                {activeTab === 'stats' && <StatsTab tracked={tracked} />}
-                {activeTab === 'history' && <HistoryView tracked={tracked} />}
-                {activeTab === 'calendar' && <CalendarView tracked={tracked} />}
-            </div>
-
-            {/* Settings panel */}
-            {showSettings && (
-                <Settings
-                    token={token}
-                    maskedToken={maskedToken}
-                    onTokenChange={handleTokenChange}
-                    onClearData={() => setShowClearConfirm(true)}
-                />
-            )}
-
-            {/* Clear confirmation modal */}
             {showClearConfirm && (
                 <Modal
-                    title="Confirm Clear"
-                    message="Are you sure you want to clear all tracked times? This action cannot be undone."
+                    title="Clear all data"
+                    message="This will permanently delete all tracked times and issue data. This action cannot be undone."
+                    confirmLabel="Clear Data"
+                    confirmVariant="danger"
                     onConfirm={confirmClear}
                     onCancel={() => setShowClearConfirm(false)}
                 />

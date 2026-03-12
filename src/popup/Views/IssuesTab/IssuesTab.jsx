@@ -8,6 +8,7 @@ import { IssueStorageService } from '../../../utils/issue-storage.js';
 import { StorageService } from '../../../utils/storage.js';
 import { STORAGE_KEYS } from '../../../utils/constants.js';
 import { useStorageListener } from '../../../hooks/useStorageListener.js';
+import { IconSearch, IconPlus, IconChevronDown, IconChevronRight, IconRefresh, IconX, IconPin } from '../../../icons.jsx';
 
 export function IssuesTab() {
     const [pinnedRepos, setPinnedRepos] = useState([]);
@@ -17,18 +18,16 @@ export function IssuesTab() {
     const [loading, setLoading] = useState({});
     const [showPinModal, setShowPinModal] = useState(false);
     const [activeIssue, setActiveIssue] = useState(null);
-    const [filter, setFilter] = useState('all'); // 'all' | 'assigned' | 'created'
+    const [filter, setFilter] = useState('all');
     const [currentUser, setCurrentUser] = useState(null);
 
     const tracked = useStorageListener(STORAGE_KEYS.TRACKED_TIMES, []);
 
-    // Load pinned repos and their issues
     useEffect(() => {
         const load = async () => {
             const repos = await CacheService.getPinnedRepos();
             setPinnedRepos(repos);
 
-            // Load cached user
             const cachedUser = await CacheService.getCachedUser();
             if (cachedUser) {
                 setCurrentUser(cachedUser.login);
@@ -58,7 +57,6 @@ export function IssuesTab() {
         load();
     }, []);
 
-    // Listen for active issue changes
     useEffect(() => {
         const load = async () => {
             const active = await StorageService.get(STORAGE_KEYS.ACTIVE_ISSUE);
@@ -97,7 +95,6 @@ export function IssuesTab() {
         setLoading((prev) => ({ ...prev, [repo.fullName]: false }));
     };
 
-    // Calculate tracked time per issue
     const trackedTimeByIssue = useMemo(() => {
         const map = {};
         for (const entry of tracked) {
@@ -106,7 +103,6 @@ export function IssuesTab() {
         return map;
     }, [tracked]);
 
-    // Handle start/stop
     const handleStart = async (issue) => {
         const [owner, repo] = issue.issueUrl.split('/').slice(1, 3);
         const fullTitle = `(${owner}) ${repo} | ${issue.title} | #${issue.number}`;
@@ -120,7 +116,6 @@ export function IssuesTab() {
         chrome.runtime.sendMessage({ action: 'timerStopped', issueUrl: issue.issueUrl });
     };
 
-    // Filter issues by assignee/creator
     const filterIssue = (issue) => {
         if (!currentUser || filter === 'all') return true;
         if (filter === 'assigned') return (issue.assignees || []).includes(currentUser);
@@ -128,7 +123,6 @@ export function IssuesTab() {
         return true;
     };
 
-    // Search across all repos
     const allFilteredIssues = useMemo(() => {
         if (!searchTerm) return null;
         const term = searchTerm.toLowerCase();
@@ -149,20 +143,23 @@ export function IssuesTab() {
     }, [searchTerm, repoIssues, filter, currentUser]);
 
     return (
-        <div>
+        <div className="p-4">
             {/* Search */}
-            <div className="mb-2">
+            <div className="relative mb-3">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                    <IconSearch size={14} />
+                </div>
                 <input
                     type="text"
-                    placeholder="Search issues across pinned repos..."
+                    placeholder="Search issues..."
                     value={searchTerm}
                     onInput={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-8 pr-3 py-2 text-[13px] bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-900 placeholder:text-slate-400"
                 />
             </div>
 
-            {/* Filter bar */}
-            <div className="flex gap-1 mb-3">
+            {/* Filter pills */}
+            <div className="flex gap-1.5 mb-4">
                 {[
                     { id: 'all', label: 'All' },
                     { id: 'assigned', label: 'Assigned to me' },
@@ -171,9 +168,9 @@ export function IssuesTab() {
                     <button
                         key={f.id}
                         onClick={() => setFilter(f.id)}
-                        className={`text-xs px-2 py-0.5 rounded-full cursor-pointer transition-colors ${filter === f.id
-                                ? 'bg-blue-100 text-blue-700 font-medium'
-                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        className={`text-[11px] px-2.5 py-1 rounded-full cursor-pointer transition-colors font-medium ${filter === f.id
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                             }`}
                     >
                         {f.label}
@@ -185,11 +182,11 @@ export function IssuesTab() {
             {searchTerm && allFilteredIssues && (
                 <div>
                     {allFilteredIssues.length === 0 ? (
-                        <div className="text-sm text-gray-500 text-center py-4">No issues found</div>
+                        <div className="text-[13px] text-slate-400 text-center py-8">No issues found</div>
                     ) : (
                         allFilteredIssues.map((issue) => (
                             <div key={issue.issueUrl}>
-                                <div className="text-xs text-gray-400 px-1 mt-1">{issue.repoName}</div>
+                                <div className="text-[11px] text-slate-400 px-2 mt-2 mb-0.5 font-medium">{issue.repoName}</div>
                                 <IssueRow
                                     issue={issue}
                                     isActive={activeIssue === issue.issueUrl}
@@ -207,24 +204,27 @@ export function IssuesTab() {
             {!searchTerm && (
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">
                             Pinned Repos
                         </span>
                         <button
                             onClick={() => setShowPinModal(true)}
-                            className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer font-medium"
+                            className="flex items-center gap-0.5 text-[11px] text-indigo-600 hover:text-indigo-800 cursor-pointer font-medium"
                         >
-                            + Add
+                            <IconPlus size={12} />
+                            Add
                         </button>
                     </div>
 
                     {pinnedRepos.length === 0 && (
-                        <div className="text-sm text-gray-500 text-center py-8">
-                            <div className="text-2xl mb-2">📌</div>
-                            <div>No pinned repos yet</div>
+                        <div className="text-center py-10">
+                            <div className="text-slate-300 mb-3">
+                                <IconPin size={32} className="mx-auto" />
+                            </div>
+                            <div className="text-[13px] text-slate-500 mb-1">No pinned repos yet</div>
                             <button
                                 onClick={() => setShowPinModal(true)}
-                                className="text-blue-600 hover:underline mt-1 cursor-pointer text-sm"
+                                className="text-[13px] text-indigo-600 hover:text-indigo-800 cursor-pointer font-medium"
                             >
                                 Pin your first repository
                             </button>
@@ -233,9 +233,8 @@ export function IssuesTab() {
 
                     {pinnedRepos.map((repo) => (
                         <div key={repo.fullName} className="mb-1">
-                            {/* Repo header */}
                             <div
-                                className="flex items-center justify-between py-1.5 cursor-pointer hover:bg-gray-50 rounded px-1"
+                                className="flex items-center justify-between py-2 cursor-pointer hover:bg-slate-50 rounded-lg px-2 transition-colors"
                                 onClick={() =>
                                     setExpandedRepos((prev) => ({
                                         ...prev,
@@ -244,26 +243,30 @@ export function IssuesTab() {
                                 }
                             >
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-xs text-gray-400">
-                                        {expandedRepos[repo.fullName] ? '▼' : '▶'}
+                                    <span className="text-slate-400">
+                                        {expandedRepos[repo.fullName] ? (
+                                            <IconChevronDown size={14} />
+                                        ) : (
+                                            <IconChevronRight size={14} />
+                                        )}
                                     </span>
-                                    <span className="text-sm font-medium text-gray-800">
+                                    <span className="text-[13px] font-medium text-slate-900">
                                         {repo.fullName}
                                     </span>
                                     {loading[repo.fullName] && (
-                                        <span className="text-xs text-gray-400">loading...</span>
+                                        <span className="text-[11px] text-slate-400">loading...</span>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             refreshRepoIssues(repo);
                                         }}
-                                        className="text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
+                                        className="text-slate-400 hover:text-slate-600 cursor-pointer p-0.5 rounded hover:bg-slate-100 transition-colors"
                                         title="Refresh issues"
                                     >
-                                        ↻
+                                        <IconRefresh size={13} />
                                     </button>
                                     <button
                                         onClick={async (e) => {
@@ -278,23 +281,22 @@ export function IssuesTab() {
                                                 return next;
                                             });
                                         }}
-                                        className="text-xs text-gray-400 hover:text-red-500 cursor-pointer"
+                                        className="text-slate-400 hover:text-red-500 cursor-pointer p-0.5 rounded hover:bg-slate-100 transition-colors"
                                         title="Unpin repo"
                                     >
-                                        ✕
+                                        <IconX size={13} />
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Issues list */}
                             {expandedRepos[repo.fullName] && (
-                                <div className="ml-5 border-l border-gray-200 pl-2">
+                                <div className="ml-4 pl-3 border-l-2 border-slate-100">
                                     {loading[repo.fullName] && !repoIssues[repo.fullName] ? (
-                                        <div className="text-xs text-gray-400 py-2 pl-1">
+                                        <div className="text-[11px] text-slate-400 py-3 pl-2">
                                             Fetching issues...
                                         </div>
                                     ) : (repoIssues[repo.fullName] || []).filter(filterIssue).length === 0 ? (
-                                        <div className="text-xs text-gray-400 py-2 pl-1">
+                                        <div className="text-[11px] text-slate-400 py-3 pl-2">
                                             {filter === 'all' ? 'No open issues' : 'No matching issues'}
                                         </div>
                                     ) : (

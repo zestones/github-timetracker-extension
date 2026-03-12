@@ -7,3 +7,29 @@
   font-style: normal;
   font-display: swap;
 }
+
+/* Custom scrollbar */
+.popup-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.popup-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.popup-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+/* Active timer pulse */
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+.animate-pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}

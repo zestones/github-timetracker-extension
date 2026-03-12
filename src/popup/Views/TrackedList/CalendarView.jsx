@@ -4,12 +4,12 @@ import { TrackedList } from './TrackedList.jsx';
 import { TimerService } from '../../../utils/timer.js';
 import { StorageService } from '../../../utils/storage.js';
 import { STORAGE_KEYS } from '../../../utils/constants.js';
-import { SearchBar } from '../../../components/SearchBar/SearchBar.jsx';
+import { IconChevronLeft, IconChevronRight, IconSearch, IconClock } from '../../../icons.jsx';
 
 export function CalendarView({ tracked }) {
   const getLocalDate = () => {
     const date = new Date();
-    date.setHours(0, 0, 0, 0); // Reset time for local date
+    date.setHours(0, 0, 0, 0);
     return date;
   };
 
@@ -20,7 +20,6 @@ export function CalendarView({ tracked }) {
   const [currentTimes, setCurrentTimes] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Sync active issue and start time
   useEffect(() => {
     const loadActiveData = async () => {
       const [active, start] = await Promise.all([
@@ -50,13 +49,9 @@ export function CalendarView({ tracked }) {
       }
     };
     chrome.storage.local.onChanged.addListener(listener);
-
-    return () => {
-      chrome.storage.local.onChanged.removeListener(listener);
-    };
+    return () => chrome.storage.local.onChanged.removeListener(listener);
   }, []);
 
-  // Update timer for active issue
   useEffect(() => {
     if (!activeIssue || !startTime || isNaN(new Date(startTime).getTime())) {
       setCurrentTimes((prev) => {
@@ -76,21 +71,14 @@ export function CalendarView({ tracked }) {
           [activeIssue]: TimeService.formatTime(elapsed + totalTime),
         }));
       }, 1000);
-
       return intervalId;
     };
 
     let intervalId;
-    updateTotalTime().then((id) => {
-      intervalId = id;
-    });
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
+    updateTotalTime().then((id) => { intervalId = id; });
+    return () => { if (intervalId) clearInterval(intervalId); };
   }, [activeIssue, startTime]);
 
-  // Calendar logic
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   firstDayOfMonth.setHours(0, 0, 0, 0);
   const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
@@ -100,52 +88,43 @@ export function CalendarView({ tracked }) {
   const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const paddingDays = Array(firstDayWeekday).fill(null);
 
-  // Get unique dates with tracked data
   const trackedDates = useMemo(() => {
     const dates = new Set();
-    tracked.forEach(entry => {
+    tracked.forEach((entry) => {
       const entryDate = new Date(entry.date);
       if (!isNaN(entryDate.getTime())) {
-        entryDate.setHours(0, 0, 0, 0); // Normalize date
-        const dateStr = entryDate.toISOString().split('T')[0];
-        dates.add(dateStr);
+        entryDate.setHours(0, 0, 0, 0);
+        dates.add(entryDate.toISOString().split('T')[0]);
       }
     });
-    console.log('Tracked dates:', Array.from(dates)); // Debug
     return Array.from(dates);
   }, [tracked]);
 
-  // Filter tracked entries for selected date
   const selectedDayTracked = useMemo(() => {
     const startOfSelected = new Date(selectedDate);
     startOfSelected.setHours(0, 0, 0, 0);
     const endOfSelected = new Date(startOfSelected);
     endOfSelected.setDate(startOfSelected.getDate() + 1);
-
-    const filtered = tracked.filter(entry => {
+    return tracked.filter((entry) => {
       const entryDate = new Date(entry.date);
       entryDate.setHours(0, 0, 0, 0);
       return entryDate >= startOfSelected && entryDate < endOfSelected;
     });
-    console.log('Selected day tracked:', filtered); // Debug
-    return filtered;
   }, [tracked, selectedDate]);
 
-  // Calculate total time for selected date
   const selectedDayTotalTime = useMemo(() => {
     const totalSeconds = selectedDayTracked.reduce((sum, entry) => sum + (entry.seconds || 0), 0);
     return TimeService.formatTime(totalSeconds);
   }, [selectedDayTracked]);
 
-  // Filter tracked entries by search term
   const filteredTracked = useMemo(() => {
-    return selectedDayTracked.filter(entry =>
+    if (!searchTerm) return selectedDayTracked;
+    return selectedDayTracked.filter((entry) =>
       entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       entry.issueUrl.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [selectedDayTracked, searchTerm]);
 
-  // Group entries by issueUrl
   const entries = useMemo(() => {
     const grouped = filteredTracked.reduce((acc, entry) => {
       if (!acc[entry.issueUrl]) {
@@ -163,22 +142,13 @@ export function CalendarView({ tracked }) {
     }));
   }, [filteredTracked, currentTimes, activeIssue]);
 
-  const handleSearch = (term) => {
-    setSearchTerm(term);
-  };
-
-  const prevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-  };
-
-  const nextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-  };
+  const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
 
   const selectDay = (day) => {
-    const newSelectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    newSelectedDate.setHours(0, 0, 0, 0);
-    setSelectedDate(newSelectedDate);
+    const d = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    d.setHours(0, 0, 0, 0);
+    setSelectedDate(d);
   };
 
   const isDayTracked = (day) => {
@@ -186,7 +156,6 @@ export function CalendarView({ tracked }) {
     date.setHours(0, 0, 0, 0);
     const dateStr = date.toISOString().split('T')[0];
     const today = getLocalDate();
-    today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().split('T')[0];
     return trackedDates.includes(dateStr) || dateStr === todayStr;
   };
@@ -197,53 +166,97 @@ export function CalendarView({ tracked }) {
     return date.toDateString() === selectedDate.toDateString();
   };
 
+  const isToday = (day) => {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    date.setHours(0, 0, 0, 0);
+    return date.toDateString() === getLocalDate().toDateString();
+  };
+
   return (
-    <div className="text-gray-900">
-      <div className="flex justify-between items-center mb-2">
+    <div className="p-4">
+      {/* Month navigation */}
+      <div className="flex justify-between items-center mb-3">
         <button
           onClick={prevMonth}
-          className="px-2 py-1 text-sm text-blue-600 hover:bg-gray-200/50 rounded-md"
+          className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
         >
-          ← Prev
+          <IconChevronLeft size={16} />
         </button>
-        <span className="text-sm font-bold">
-                    {currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' })}
-                </span>
+        <span className="text-[13px] font-semibold text-slate-900">
+          {currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' })}
+        </span>
         <button
           onClick={nextMonth}
-          className="px-2 py-1 text-sm text-blue-600 hover:bg-gray-200/50 rounded-md"
+          className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
         >
-          Next →
+          <IconChevronRight size={16} />
         </button>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center text-xs mb-2">
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="font-semibold text-gray-600">{day}</div>
+
+      {/* Calendar grid */}
+      <div className="grid grid-cols-7 gap-0.5 text-center mb-4">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+          <div key={i} className="text-[10px] font-medium text-slate-400 py-1">{day}</div>
         ))}
         {paddingDays.map((_, i) => (
-          <div key={`pad-${i}`} className="h-8"></div>
+          <div key={`pad-${i}`} className="h-8" />
         ))}
-        {daysArray.map(day => (
-          <div
-            key={day}
-            className={`h-8 flex items-center justify-center rounded-md ${
-              isDayTracked(day)
-                ? isSelectedDay(day)
-                  ? 'bg-blue-500 text-white cursor-pointer'
-                  : 'bg-gray-200/50 cursor-pointer hover:bg-gray-300/50'
-                : 'text-gray-400 cursor-not-allowed'
-            }`}
-            onClick={() => isDayTracked(day) && selectDay(day)}
-          >
-            {day}
-          </div>
-        ))}
+        {daysArray.map((day) => {
+          const tracked = isDayTracked(day);
+          const selected = isSelectedDay(day);
+          const today = isToday(day);
+          return (
+            <div
+              key={day}
+              className={`h-8 flex items-center justify-center rounded-lg text-[12px] transition-colors ${selected
+                  ? 'bg-indigo-600 text-white font-medium cursor-pointer'
+                  : tracked
+                    ? 'bg-indigo-50 text-indigo-700 cursor-pointer hover:bg-indigo-100 font-medium'
+                    : today
+                      ? 'text-slate-900 font-medium'
+                      : 'text-slate-300'
+                } ${tracked || today ? 'cursor-pointer' : ''}`}
+              onClick={() => (tracked || today) && selectDay(day)}
+            >
+              {day}
+            </div>
+          );
+        })}
       </div>
-      <div className="mb-2 font-bold">
-        Total time for {selectedDate.toLocaleDateString('ru-RU')}: {selectedDayTotalTime}
+
+      {/* Selected day summary */}
+      <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-100">
+        <div className="text-[13px] text-slate-700 font-medium">
+          {selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+        </div>
+        <div className="flex items-center gap-1 text-[13px] font-mono font-semibold text-slate-900 tabular-nums">
+          <IconClock size={13} className="text-slate-400" />
+          {selectedDayTotalTime}
+        </div>
       </div>
-      <SearchBar onSearch={handleSearch} />
-      <TrackedList entries={entries} showTimerControls={true} />
+
+      {/* Search */}
+      <div className="relative mb-3">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <IconSearch size={13} />
+        </div>
+        <input
+          type="text"
+          placeholder="Search entries..."
+          value={searchTerm}
+          onInput={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-8 pr-3 py-1.5 text-[13px] bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-900 placeholder:text-slate-400"
+        />
+      </div>
+
+      {/* Entries */}
+      {entries.length === 0 ? (
+        <div className="text-[13px] text-slate-400 text-center py-6">
+          No entries for this day
+        </div>
+      ) : (
+        <TrackedList entries={entries} showTimerControls={true} />
+      )}
     </div>
   );
 }

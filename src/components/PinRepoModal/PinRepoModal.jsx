@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { GitHubService } from '../../utils/github.js';
+import { IconX, IconSearch, IconCheck, IconPin } from '../../icons.jsx';
 
 export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
     const [query, setQuery] = useState('');
@@ -45,46 +46,51 @@ export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
     const isPinned = (fullName) => pinnedRepos.some((r) => r.fullName === fullName);
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-[380px] max-h-[420px] shadow-xl flex flex-col">
-                <div className="p-3 border-b border-gray-200">
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-semibold text-gray-800">Pin a Repository</h3>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 backdrop-blur-sm">
+            <div className="bg-white rounded-xl w-[360px] max-h-[400px] shadow-2xl shadow-black/20 flex flex-col overflow-hidden">
+                <div className="px-4 pt-4 pb-3">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-[14px] font-semibold text-slate-900">Pin a Repository</h3>
                         <button
                             onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600 cursor-pointer text-lg leading-none"
+                            className="text-slate-400 hover:text-slate-600 cursor-pointer p-0.5 rounded-md hover:bg-slate-100 transition-colors"
                         >
-                            ✕
+                            <IconX size={16} />
                         </button>
                     </div>
-                    <input
-                        ref={inputRef}
-                        type="text"
-                        placeholder="Search repositories..."
-                        value={query}
-                        onInput={(e) => handleSearch(e.target.value)}
-                        className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    />
+                    <div className="relative">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                            <IconSearch size={14} />
+                        </div>
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            placeholder="Search repositories..."
+                            value={query}
+                            onInput={(e) => handleSearch(e.target.value)}
+                            className="w-full pl-8 pr-3 py-2 text-[13px] bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-900 placeholder:text-slate-400"
+                        />
+                    </div>
                 </div>
-                <div className="overflow-y-auto flex-1 p-2">
+                <div className="overflow-y-auto flex-1 px-2 pb-3 popup-scroll">
                     {searching && (
-                        <div className="text-sm text-gray-500 text-center py-6">Searching...</div>
+                        <div className="text-[13px] text-slate-400 text-center py-8">Searching...</div>
                     )}
                     {!searching && query && results.length === 0 && (
-                        <div className="text-sm text-gray-500 text-center py-6">No repositories found</div>
+                        <div className="text-[13px] text-slate-400 text-center py-8">No repositories found</div>
                     )}
                     {!searching &&
                         results.map((repo) => (
                             <div
                                 key={repo.fullName}
-                                className="flex items-center justify-between p-2 hover:bg-gray-50 rounded"
+                                className="flex items-center gap-2 p-2.5 hover:bg-slate-50 rounded-lg transition-colors"
                             >
-                                <div className="flex-1 min-w-0 mr-2">
-                                    <div className="text-sm font-medium text-gray-800 truncate">
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-[13px] font-medium text-slate-900 truncate">
                                         {repo.fullName}
                                     </div>
                                     {repo.description && (
-                                        <div className="text-xs text-gray-500 truncate">
+                                        <div className="text-[11px] text-slate-400 truncate mt-0.5">
                                             {repo.description}
                                         </div>
                                     )}
@@ -96,12 +102,16 @@ export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
                                         }
                                     }}
                                     disabled={isPinned(repo.fullName)}
-                                    className={`shrink-0 text-xs px-2.5 py-1 rounded cursor-pointer transition-colors ${isPinned(repo.fullName)
-                                            ? 'bg-gray-100 text-gray-400 cursor-default'
-                                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                    className={`shrink-0 flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-md cursor-pointer transition-colors ${isPinned(repo.fullName)
+                                            ? 'bg-slate-100 text-slate-400 cursor-default'
+                                            : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
                                         }`}
                                 >
-                                    {isPinned(repo.fullName) ? '✓ Pinned' : '📌 Pin'}
+                                    {isPinned(repo.fullName) ? (
+                                        <><IconCheck size={12} /> Pinned</>
+                                    ) : (
+                                        <><IconPin size={12} /> Pin</>
+                                    )}
                                 </button>
                             </div>
                         ))}
