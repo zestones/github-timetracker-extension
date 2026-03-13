@@ -1,23 +1,17 @@
 import { useState, useEffect } from 'preact/hooks';
-import { TimeService } from '../utils/time.js';
-import { TimerService } from '../utils/timer.js';
 import { IssueStorageService } from '../utils/issue-storage.js';
 import { GitHubService } from '../utils/github.js';
 import { AggregationService } from '../utils/aggregation.js';
-import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../utils/constants.js';
-import { useActiveTimer } from '../hooks/useActiveTimer.js';
+import { useElapsedTimer } from '../hooks/useElapsedTimer.js';
 import { IconStop } from '../icons.jsx';
 
 export function ActiveTimer() {
-    const { activeIssue, startTime, stop } = useActiveTimer();
+    const { activeIssue, startTime, elapsedTime, stop } = useElapsedTimer({ includeTotalTime: true });
     const [issueInfo, setIssueInfo] = useState(null);
-    const [elapsed, setElapsed] = useState('00:00:00');
-    const [totalTime, setTotalTime] = useState(0);
 
     useEffect(() => {
         if (!activeIssue) {
             setIssueInfo(null);
-            setTotalTime(0);
             return;
         }
 
@@ -32,26 +26,9 @@ export function ActiveTimer() {
             } catch (e) {
                 setIssueInfo({ fullRepo: 'unknown', issueNumber: 0, title: issue?.title || 'Untitled' });
             }
-            const total = await TimerService.getTotalTimeForIssue(activeIssue);
-            setTotalTime(total);
         };
         loadInfo();
     }, [activeIssue]);
-
-    useEffect(() => {
-        if (!activeIssue || !startTime) {
-            setElapsed('00:00:00');
-            return;
-        }
-
-        const update = () => {
-            setElapsed(TimeService.timeStringSince(startTime, totalTime));
-        };
-        update();
-
-        const id = setInterval(update, TIME_UPDATE_INTERVAL);
-        return () => clearInterval(id);
-    }, [activeIssue, startTime, totalTime]);
 
     const handleStop = async () => {
         if (!activeIssue) return;
@@ -72,7 +49,7 @@ export function ActiveTimer() {
                 </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-                <span className="text-sm font-mono font-semibold text-success-text tabular-nums">{elapsed}</span>
+                <span className="text-sm font-mono font-semibold text-success-text tabular-nums">{elapsedTime || '00:00:00'}</span>
                 <button
                     onClick={handleStop}
                     className="flex items-center gap-1 bg-danger-muted hover:bg-danger-hover text-white text-[11px] font-medium pl-1.5 pr-2 py-1 rounded-md cursor-pointer transition-colors"

@@ -38,7 +38,6 @@ export function useActiveTimer() {
         const url = issueUrl ?? activeIssue;
         if (!url) return;
         await TimerService.stopTimer(url);
-        chrome.runtime.sendMessage({ action: 'timerStopped', issueUrl: url });
     };
 
     return { activeIssue, startTime, isActive, stop };

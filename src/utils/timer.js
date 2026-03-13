@@ -43,6 +43,7 @@ export class TimerService {
             }
 
             const totalTime = await this.getTotalTimeForIssue(issueUrl);
+            chrome.runtime.sendMessage({ action: 'timerStarted', issueUrl });
             return { issueUrl, totalTime, isRunning: true };
         } catch (error) {
             console.error('Failed to start timer:', error);
@@ -101,6 +102,7 @@ export class TimerService {
                 this.syncCommentInBackground(issueUrl, owner, repo, issueNumber, updatedTrackedTimes);
             }
 
+            chrome.runtime.sendMessage({ action: 'timerStopped', issueUrl });
             return { issueUrl, totalTime, isRunning: false };
         } catch (error) {
             console.error('Failed to stop timer:', error);

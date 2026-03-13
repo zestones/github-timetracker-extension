@@ -1,9 +1,7 @@
-import { useState, useMemo, useEffect, useRef } from 'preact/hooks';
+import { useState, useMemo } from 'preact/hooks';
 import { TimeService } from '../../utils/time.js';
 import { TrackedList } from './TrackedList.jsx';
-import { TimerService } from '../../utils/timer.js';
-import { STORAGE_KEYS } from '../../utils/constants.js';
-import { useActiveTimer } from '../../hooks/useActiveTimer.js';
+import { useElapsedTimer } from '../../hooks/useElapsedTimer.js';
 import { IconChevronLeft, IconChevronRight, IconSearch, IconClock } from '../../icons.jsx';
 
 export function CalendarView({ tracked }) {
@@ -15,47 +13,8 @@ export function CalendarView({ tracked }) {
 
   const [currentDate, setCurrentDate] = useState(getLocalDate());
   const [selectedDate, setSelectedDate] = useState(getLocalDate());
-  const { activeIssue, startTime } = useActiveTimer();
-  const [currentTimes, setCurrentTimes] = useState({});
+  const { activeIssue, elapsedTime } = useElapsedTimer({ includeTotalTime: true });
   const [searchTerm, setSearchTerm] = useState('');
-
-  const intervalRef = useRef(null);
-
-  useEffect(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    if (!activeIssue || !startTime || isNaN(new Date(startTime).getTime())) {
-      setCurrentTimes((prev) => {
-        const newTimes = { ...prev };
-        delete newTimes[activeIssue];
-        return newTimes;
-      });
-      return;
-    }
-
-    let cancelled = false;
-    TimerService.getTotalTimeForIssue(activeIssue).then((totalTime) => {
-      if (cancelled) return;
-      intervalRef.current = setInterval(() => {
-        const elapsed = (Date.now() - new Date(startTime).getTime()) / 1000;
-        setCurrentTimes((prev) => ({
-          ...prev,
-          [activeIssue]: TimeService.formatTime(elapsed + totalTime),
-        }));
-      }, 1000);
-    });
-
-    return () => {
-      cancelled = true;
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [activeIssue, startTime]);
 
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   firstDayOfMonth.setHours(0, 0, 0, 0);
@@ -112,11 +71,11 @@ export function CalendarView({ tracked }) {
     return Object.values(grouped).map((e) => ({
       ...e,
       displayTime:
-        e.issueUrl === activeIssue && currentTimes[e.issueUrl]
-          ? currentTimes[e.issueUrl]
+        e.issueUrl === activeIssue && elapsedTime
+          ? elapsedTime
           : TimeService.formatTime(e.seconds),
     }));
-  }, [filteredTracked, currentTimes, activeIssue]);
+  }, [filteredTracked, elapsedTime, activeIssue]);
 
   const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));

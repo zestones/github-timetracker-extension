@@ -85,12 +85,10 @@ export function IssuesTab() {
         const fullTitle = `(${owner}) ${repo} | ${issue.title} | #${issue.number}`;
         await IssueStorageService.add({ url: issue.issueUrl, title: fullTitle });
         await TimerService.startTimer(issue.issueUrl);
-        chrome.runtime.sendMessage({ action: 'timerStarted', issueUrl: issue.issueUrl });
     };
 
     const handleStop = async (issue) => {
         await TimerService.stopTimer(issue.issueUrl);
-        chrome.runtime.sendMessage({ action: 'timerStopped', issueUrl: issue.issueUrl });
     };
 
     const filterIssue = (issue) => {
