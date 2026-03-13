@@ -36,45 +36,42 @@ A feature-rich browser extension that brings time tracking directly into GitHub.
 
 ## Features
 
-### Inline Timer on GitHub Issues
+### Time Tracking
 
-A **Start / Stop Timer** button is injected directly on every GitHub issue page. It displays a real-time elapsed counter combining accumulated and current session time. When you start a new timer, the previous one stops automatically — preventing overlaps and ensuring accurate tracking.
+A **Start / Stop Timer** button is injected directly on every GitHub issue page. It displays a real-time elapsed counter combining accumulated and current session time. When you start a new timer, the previous one stops automatically — preventing overlaps and ensuring accurate tracking. All timer state is persisted locally: it survives browser restarts and recovers gracefully from crashes.
 
-### Pinned Repositories and Issue Browser
+### Issue Browser
 
-Pin any GitHub repository for quick access from the extension popup. From there, you can browse, search, and filter issues by status (open, closed), assignee, or creator. Timers can be started or stopped on any issue without navigating away from the popup. Issue lists are cached with a 5-minute TTL to minimize API calls.
+Pin any GitHub repository for quick access from the extension popup. Browse, search, and filter issues by status (open, closed), assignee, or creator — and start or stop timers without leaving the popup. Issue lists are cached with a 5-minute TTL to minimize API calls.
 
-### Calendar View
+### Calendar
 
-An interactive monthly calendar highlights days with tracked time. Clicking any day reveals a breakdown of tracked issues and total time spent. You can search within a selected day and see live updates while a timer is running.
+An interactive monthly calendar highlights days with tracked time. Click any day to see a breakdown of issues worked on and total time spent. Entries are searchable and update live while a timer is running.
 
 ### Stats and Analytics
 
-Summary cards show time tracked today, this week, and this month. A per-repository breakdown uses horizontal bar charts with percentage distribution. Drilling down into a repository shows total time, number of sessions, average session length, and days worked per issue. Results can be sorted by time, sessions, average, or days — in ascending or descending order. A custom date range picker allows filtering to any period.
+Summary cards display time tracked today, this week, and this month. A per-repository breakdown shows horizontal bar charts with percentage distribution. Drilling into a repository reveals total time, number of sessions, average session length, and days worked per issue — sortable by any of those dimensions. A custom date range picker allows filtering to any period.
 
-### Collaborative Time Tracking
+An **Everyone** mode fetches all team members' tracker comments from issues, providing aggregated analytics with individual contributor attribution.
 
-An "Everyone" mode in the Stats tab fetches all team members' tracker comments from issues, providing aggregated team-wide analytics with individual contributor attribution.
+### Sync and Data Recovery
 
-### GitHub Sync and Data Recovery
+The extension posts time sessions as formatted Markdown tables to GitHub issue comments. These comments double as a backup: tracked times can be recovered from them after data loss or when setting up on a new device. Auto-sync on popup open is available as an optional toggle, and the merge logic only imports remote data when it exceeds local records.
 
-The extension can recover tracked times from GitHub issue comments — useful after data loss or when setting up on a new device. Auto-sync on popup open is available as an optional toggle. The merge is intelligent: remote data is imported only when it exceeds local records. Time sessions are also posted as formatted Markdown tables directly to GitHub issues, keeping your team informed.
+<details>
+<summary><strong>More features</strong></summary>
 
-### Theme Support
+<br />
 
-Three modes are available: **System** (auto-detect from OS preference), **Light**, and **Dark**. The selected theme persists across sessions.
+**Theme support** — System (auto-detect), Light, and Dark modes. The preference persists across sessions.
 
-### Data Export
+**Data export** — Export tracked data as CSV (issue URL, title, seconds, date) or JSON. CSV exports include formula injection protection.
 
-Tracked data can be exported as **CSV** (issue URL, title, seconds, date) or **JSON** (full structured data). CSV exports include formula injection protection.
+**Settings** — GitHub profile display with masked token, API rate limit indicator with reset countdown, token format validation, and a guarded "Clear All Data" action.
 
-### Settings
+**Offline-first persistence** — All data lives in Chrome's `storage.local` API. A background service worker refreshes caches every 15 minutes. Estimated capacity is ~33,000 entries (3–4 years of heavy use) within the 5 MB limit.
 
-The settings panel displays your GitHub user profile with a masked token (first 4 characters only), an API rate limit indicator with reset countdown, and token format validation. A "Clear All Tracked Data" action is available with confirmation.
-
-### Persistence
-
-All data is stored locally via Chrome's `storage.local` API — the extension works fully offline. Timer state persists across browser restarts and recovers gracefully from crashes. A background service worker refreshes caches every 15 minutes. The estimated capacity is approximately 33,000 entries (3–4 years of heavy use) within the 5 MB storage limit.
+</details>
 
 ---
 
