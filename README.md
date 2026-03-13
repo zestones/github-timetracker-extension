@@ -1,7 +1,7 @@
-<div style="display: flex; align-items: center; gap: 12px;">
-  <img src="docs/screenshots/repos-icon.png" width="48" height="48" alt="icon" />
-  <h1 style="margin: 0;">GitHub Time Tracker</h1>
-</div>
+<table><tr>
+  <td valign="middle"><img src="docs/screenshots/repos-icon.png" width="48" height="48" alt="icon" /></td>
+  <td valign="middle"><h1>GitHub Time Tracker</h1></td>
+</tr></table>
 
 _<span style="font-size: 1.1em; color: #555;">A feature-rich browser extension that brings time tracking directly into GitHub.</span>_
 
