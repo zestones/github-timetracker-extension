@@ -1,6 +1,13 @@
-# <img src="docs/screenshots/repos-icon.png" width="48" height="48" alt="icon" style="vertical-align: middle;" /> GitHub Time Tracker
+<div style="display: flex; align-items: center; gap: 12px;">
+  <img src="docs/screenshots/repos-icon.png" width="48" height="48" alt="icon" />
+  <h1 style="margin: 0;">GitHub Time Tracker</h1>
+</div>
+
+_<span style="font-size: 1.1em; color: #555;">A feature-rich browser extension that brings time tracking directly into GitHub.</span>_
 
 [![CI](https://github.com/zestones/github-timetracker-extension/actions/workflows/ci.yml/badge.svg)](https://github.com/zestones/github-timetracker-extension/actions/workflows/ci.yml) [![GitHub release](https://img.shields.io/github/v/release/zestones/github-timetracker-extension)](https://github.com/zestones/github-timetracker-extension/releases)
+
+
 
 A feature-rich browser extension that brings time tracking directly into GitHub. Track time on issues, pin repositories, visualize your work in a calendar, analyze stats per repo, and collaborate with your team — all without leaving GitHub.
 
@@ -23,12 +30,12 @@ A feature-rich browser extension that brings time tracking directly into GitHub.
   <tr>
     <td align="center"><strong>Repo Details</strong></td>
     <td align="center"><strong>Settings</strong></td>
-    <td></td>
+    <td align="center"><strong>Settings</strong></td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/stats-details.png" width="280" alt="Repository detail view" /></td>
     <td><img src="docs/screenshots/settings.png" width="280" alt="Settings panel" /></td>
-    <td></td>
+    <td><img src="docs/screenshots/settings-2.png" width="280" alt="Settings panel" /></td>
   </tr>
 </table>
 
