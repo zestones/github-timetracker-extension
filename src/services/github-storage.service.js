@@ -1,5 +1,5 @@
-import { STORAGE_KEYS } from './constants.js';
-import { StorageService } from './storage.js';
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
+import { StorageService } from './storage.service.js';
 
 const GITHUB_TOKEN_PATTERN = /^(ghp_[a-zA-Z0-9]{36,251}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}|[0-9a-f]{40})$/;
 

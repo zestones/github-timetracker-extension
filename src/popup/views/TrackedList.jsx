@@ -1,4 +1,4 @@
-import { TimerService } from '../../utils/timer.js';
+import { TimerService } from '../../services/timer.service.js';
 import { useActiveTimer } from '../../hooks/useActiveTimer.js';
 import { IconPlay, IconStop, IconExternalLink } from '../../icons.jsx';
 

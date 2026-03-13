@@ -1,7 +1,7 @@
 // content/index.js
 import { injectTimerButton, resetInjectedFlag } from './injectTimerButton.js';
 import { isIssuePage } from './helpers.js';
-import { STORAGE_KEYS, DEBOUNCE_INJECT_MS, CONTAINER_CHECK_INTERVAL_MS, CONTAINER_CHECK_MAX_ATTEMPTS } from '../utils/constants.js';
+import { STORAGE_KEYS, DEBOUNCE_INJECT_MS, CONTAINER_CHECK_INTERVAL_MS, CONTAINER_CHECK_MAX_ATTEMPTS } from '../utils/constants.utils.js';
 
 function debounce(fn, delay) {
     let timeoutId;

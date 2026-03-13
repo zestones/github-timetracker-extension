@@ -1,8 +1,8 @@
-import { GitHubService } from './github.js';
-import { StorageService } from './storage.js';
-import { IssueStorageService } from './issue-storage.js';
-import { PinnedReposService } from './pinned-repos.js';
-import { STORAGE_KEYS } from './constants.js';
+import { GitHubService } from './github.service.js';
+import { StorageService } from './storage.service.js';
+import { IssueStorageService } from './issue-storage.service.js';
+import { PinnedReposService } from './pinned-repos.service.js';
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
 
 /**
  * Recovers tracked times from GitHub comments for all pinned repos.

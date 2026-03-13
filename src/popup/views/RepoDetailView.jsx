@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'preact/hooks';
-import { TimeService } from '../../utils/time.js';
+import { TimeService } from '../../utils/time.utils.js';
 import { IconChevronLeft, IconChevronDown, IconChevronRight, IconExternalLink } from '../../icons.jsx';
 
 const SORT_OPTIONS = [

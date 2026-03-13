@@ -1,4 +1,4 @@
-import { TimeService } from './time.js';
+import { TimeService } from './time.utils.js';
 
 export class AggregationService {
     static parseRepo(issueUrl) {

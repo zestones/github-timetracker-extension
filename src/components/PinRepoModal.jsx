@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { GitHubService } from '../utils/github.js';
-import { DEBOUNCE_SEARCH_MS } from '../utils/constants.js';
+import { GitHubService } from '../services/github.service.js';
+import { DEBOUNCE_SEARCH_MS } from '../utils/constants.utils.js';
 import { useDebounce } from '../hooks/useDebounce.js';
 import { SearchInput } from './SearchInput.jsx';
 import { IconX, IconCheck, IconPin } from '../icons.jsx';

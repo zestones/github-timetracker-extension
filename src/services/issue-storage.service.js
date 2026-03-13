@@ -1,15 +1,15 @@
-import { StorageService } from './storage.js';
-import { STORAGE_KEYS } from "./constants.js";
+import { StorageService } from './storage.service.js';
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
 
 const STORAGE_KEY = STORAGE_KEYS.ISSUES;
 
 export class IssueStorageService {
-    /** @returns {Promise<import('./schema.js').IssueEntry[]>} */
+    /** @returns {Promise<import('../utils/schema.utils.js').IssueEntry[]>} */
     static async getAll() {
         return (await StorageService.get(STORAGE_KEY)) ?? [];
     }
 
-    /** @param {import('./schema.js').IssueEntry} issue */
+    /** @param {import('../utils/schema.utils.js').IssueEntry} issue */
     static async add(issue) {
         const issues = await this.getAll();
         const exists = issues.some(i => i.url === issue.url);

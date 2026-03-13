@@ -1,10 +1,10 @@
 // background/index.js
-import { GitHubService } from '../utils/github.js';
-import { GitHubStorageService } from '../utils/github-storage.js';
-import { CACHE_REFRESH_INTERVAL, SCHEMA_VERSION, STORAGE_KEYS } from '../utils/constants.js';
-import { CacheService } from '../utils/cache.js';
-import { PinnedReposService } from '../utils/pinned-repos.js';
-import { StorageService } from '../utils/storage.js';
+import { GitHubService } from '../services/github.service.js';
+import { GitHubStorageService } from '../services/github-storage.service.js';
+import { CACHE_REFRESH_INTERVAL, SCHEMA_VERSION, STORAGE_KEYS } from '../utils/constants.utils.js';
+import { CacheService } from '../services/cache.service.js';
+import { PinnedReposService } from '../services/pinned-repos.service.js';
+import { StorageService } from '../services/storage.service.js';
 
 async function refreshCachedIssues() {
     const token = await GitHubStorageService.getGitHubToken();

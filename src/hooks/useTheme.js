@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
-import { StorageService } from '../utils/storage.js';
-import { STORAGE_KEYS } from '../utils/constants.js';
+import { StorageService } from '../services/storage.service.js';
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
 
 export function useTheme() {
     const [preference, setPreference] = useState('system');

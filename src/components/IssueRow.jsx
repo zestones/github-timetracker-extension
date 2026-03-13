@@ -1,4 +1,4 @@
-import { TimeService } from '../utils/time.js';
+import { TimeService } from '../utils/time.utils.js';
 import { IconPlay, IconStop, IconExternalLink } from '../icons.jsx';
 
 export function IssueRow({ issue, isActive, onStart, onStop, trackedSeconds = 0 }) {

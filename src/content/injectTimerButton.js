@@ -1,9 +1,9 @@
 // content/injectTimerButton.js
-import { TimerService } from '../utils/timer.js';
-import { TimeService } from '../utils/time.js';
-import { StorageService } from '../utils/storage.js';
-import { addStorageListener } from '../utils/storage-listener.js';
-import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../utils/constants.js';
+import { TimerService } from '../services/timer.service.js';
+import { TimeService } from '../utils/time.utils.js';
+import { StorageService } from '../services/storage.service.js';
+import { addStorageListener } from '../services/storage-listener.service.js';
+import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../utils/constants.utils.js';
 import { isIssuePage, getIssueTitle } from './helpers.js';
 
 // Flag to prevent duplicate injections on same page

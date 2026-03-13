@@ -1,15 +1,15 @@
-import { GitHubService } from './github.js';
-import { IssueStorageService } from './issue-storage.js';
-import { PinnedReposService } from './pinned-repos.js';
-import { StorageService } from './storage.js';
-import { STORAGE_KEYS } from './constants.js';
+import { GitHubService } from './github.service.js';
+import { IssueStorageService } from './issue-storage.service.js';
+import { PinnedReposService } from './pinned-repos.service.js';
+import { StorageService } from './storage.service.js';
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
 
 /**
  * Build a title map from local issues and tracked entries,
  * then fill missing titles from the GitHub API.
  *
  * @param {Array} allUsersData - Items returned by GitHubService.fetchAllUsersData
- * @param {import('./schema.js').TrackedTimeEntry[]} tracked - Local tracked entries
+ * @param {import('../utils/schema.utils.js').TrackedTimeEntry[]} tracked - Local tracked entries
  * @returns {Promise<Record<string, string>>} issueUrl → display title
  */
 async function buildTitleMap(allUsersData, tracked) {
@@ -58,8 +58,8 @@ async function buildTitleMap(allUsersData, tracked) {
  * cache the result, and merge the current user's remote entries into local storage.
  *
  * @param {string|null} username - Current user's GitHub login (null to skip merge)
- * @param {import('./schema.js').TrackedTimeEntry[]} tracked - Current local tracked entries
- * @returns {Promise<import('./schema.js').EveryoneDataEntry[]>} Flat list of everyone entries
+ * @param {import('../utils/schema.utils.js').TrackedTimeEntry[]} tracked - Current local tracked entries
+ * @returns {Promise<import('../utils/schema.utils.js').EveryoneDataEntry[]>} Flat list of everyone entries
  */
 export async function fetchAndMergeEveryoneData(username, tracked) {
     const pinnedRepos = await PinnedReposService.getPinnedRepos();

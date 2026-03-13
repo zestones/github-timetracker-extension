@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
-import { StorageService } from '../utils/storage.js';
-import { TimerService } from '../utils/timer.js';
-import { STORAGE_KEYS } from '../utils/constants.js';
+import { StorageService } from '../services/storage.service.js';
+import { TimerService } from '../services/timer.service.js';
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
 
 export function useActiveTimer() {
     const [activeIssue, setActiveIssue] = useState(null);

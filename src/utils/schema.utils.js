@@ -2,9 +2,9 @@
  * @file Central type definitions for all chrome.storage.local data shapes.
  *
  * These are JSDoc typedefs only - no runtime code. Import types like:
- *   /** @type {import('./schema.js').TrackedTimeEntry} *\/
+ *   @type {import('./schema.utils.js').TrackedTimeEntry}
  *
- * Schema version: 1 (see SCHEMA_VERSION in constants.js)
+ * Schema version: 1 (see SCHEMA_VERSION in constants.utils.js)
  */
 
 // ─── Core tracked data ──────────────────────────────────────────────

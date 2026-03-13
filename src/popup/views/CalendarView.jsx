@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'preact/hooks';
-import { TimeService } from '../../utils/time.js';
+import { TimeService } from '../../utils/time.utils.js';
 import { TrackedList } from './TrackedList.jsx';
 import { useElapsedTimer } from '../../hooks/useElapsedTimer.js';
 import { SearchInput } from '../../components/SearchInput.jsx';

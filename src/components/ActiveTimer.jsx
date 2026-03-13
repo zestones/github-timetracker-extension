@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
-import { IssueStorageService } from '../utils/issue-storage.js';
-import { GitHubService } from '../utils/github.js';
-import { AggregationService } from '../utils/aggregation.js';
+import { IssueStorageService } from '../services/issue-storage.service.js';
+import { GitHubService } from '../services/github.service.js';
+import { AggregationService } from '../utils/aggregation.utils.js';
 import { useElapsedTimer } from '../hooks/useElapsedTimer.js';
 import { IconStop } from '../icons.jsx';
 

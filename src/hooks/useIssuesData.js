@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
-import { CacheService } from '../utils/cache.js';
-import { PinnedReposService } from '../utils/pinned-repos.js';
-import { GitHubService } from '../utils/github.js';
+import { CacheService } from '../services/cache.service.js';
+import { PinnedReposService } from '../services/pinned-repos.service.js';
+import { GitHubService } from '../services/github.service.js';
 
 export function useIssuesData() {
     const [pinnedRepos, setPinnedRepos] = useState([]);

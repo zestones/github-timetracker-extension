@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'preact/hooks';
-import { GitHubStorageService } from '../utils/github-storage.js';
-import { CacheService } from '../utils/cache.js';
-import { GitHubService } from '../utils/github.js';
+import { GitHubStorageService } from '../services/github-storage.service.js';
+import { CacheService } from '../services/cache.service.js';
+import { GitHubService } from '../services/github.service.js';
 
 export function useAuth() {
     const [token, setToken] = useState('');

@@ -6,13 +6,13 @@ import { CalendarView } from './views/CalendarView.jsx';
 import { Settings } from '../components/Settings.jsx';
 import { Modal } from '../components/Modal.jsx';
 import { ErrorBoundary } from '../components/ErrorBoundary.jsx';
-import { StorageService } from '../utils/storage.js';
-import { IssueStorageService } from '../utils/issue-storage.js';
-import { STORAGE_KEYS } from '../utils/constants.js';
+import { StorageService } from '../services/storage.service.js';
+import { IssueStorageService } from '../services/issue-storage.service.js';
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
 import { useStorageListener } from '../hooks/useStorageListener.js';
 import { useTheme } from '../hooks/useTheme.js';
 import { useAuth } from '../hooks/useAuth.js';
-import { syncFromGitHub } from '../utils/sync.js';
+import { syncFromGitHub } from '../services/sync.service.js';
 import { IconIssues, IconChart, IconCalendar, IconSettings, IconGitHub } from '../icons.jsx';
 import './App.css';
 

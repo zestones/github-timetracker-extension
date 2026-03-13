@@ -1,7 +1,7 @@
-import { GITHUB_API_URL, TRACKER_PAYLOAD_PREFIX, buildTrackerMarker, matchesTrackerMarker } from './constants.js';
-import { CacheService } from './cache.js';
-import { GitHubStorageService } from "./github-storage.js";
-import { TimeService } from './time.js';
+import { GITHUB_API_URL, TRACKER_PAYLOAD_PREFIX, buildTrackerMarker, matchesTrackerMarker } from '../utils/constants.utils.js';
+import { CacheService } from './cache.service.js';
+import { GitHubStorageService } from './github-storage.service.js';
+import { TimeService } from '../utils/time.utils.js';
 
 export class GitHubService {
     static parseIssueUrl(url) {

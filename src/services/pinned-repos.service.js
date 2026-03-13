@@ -1,14 +1,14 @@
-import { StorageService } from './storage.js';
-import { CacheService } from './cache.js';
-import { STORAGE_KEYS } from './constants.js';
+import { StorageService } from './storage.service.js';
+import { CacheService } from './cache.service.js';
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
 
 export class PinnedReposService {
-    /** @returns {Promise<import('./schema.js').PinnedRepo[]>} */
+    /** @returns {Promise<import('../utils/schema.utils.js').PinnedRepo[]>} */
     static async getPinnedRepos() {
         return (await StorageService.get(STORAGE_KEYS.PINNED_REPOS)) ?? [];
     }
 
-    /** @param {import('./schema.js').PinnedRepo} repo */
+    /** @param {import('../utils/schema.utils.js').PinnedRepo} repo */
     static async addPinnedRepo(repo) {
         const repos = await this.getPinnedRepos();
         if (repos.some((r) => r.fullName === repo.fullName)) return;

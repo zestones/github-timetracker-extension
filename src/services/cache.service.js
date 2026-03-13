@@ -1,5 +1,5 @@
-import { StorageService } from './storage.js';
-import { CACHE_PREFIX, CACHE_TTL, USER_CACHE_TTL } from './constants.js';
+import { StorageService } from './storage.service.js';
+import { CACHE_PREFIX, CACHE_TTL, USER_CACHE_TTL } from '../utils/constants.utils.js';
 
 export class CacheService {
     static async get(key) {
@@ -21,22 +21,22 @@ export class CacheService {
         await StorageService.remove(`${CACHE_PREFIX}${key}`);
     }
 
-    /** @returns {Promise<import('./schema.js').CachedUser|null>} */
+    /** @returns {Promise<import('../utils/schema.utils.js').CachedUser|null>} */
     static async getCachedUser() {
         return this.get('user');
     }
 
-    /** @param {import('./schema.js').CachedUser} user */
+    /** @param {import('../utils/schema.utils.js').CachedUser} user */
     static async setCachedUser(user) {
         await this.set('user', user, USER_CACHE_TTL);
     }
 
-    /** @param {string} fullName @returns {Promise<import('./schema.js').SimplifiedIssue[]|null>} */
+    /** @param {string} fullName @returns {Promise<import('../utils/schema.utils.js').SimplifiedIssue[]|null>} */
     static async getCachedIssues(fullName) {
         return this.get(`issues:${fullName}`);
     }
 
-    /** @param {string} fullName @param {import('./schema.js').SimplifiedIssue[]} issues */
+    /** @param {string} fullName @param {import('../utils/schema.utils.js').SimplifiedIssue[]} issues */
     static async setCachedIssues(fullName, issues) {
         await this.set(`issues:${fullName}`, issues);
     }

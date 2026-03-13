@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { TimeService } from '../utils/time.js';
-import { TimerService } from '../utils/timer.js';
-import { TIME_UPDATE_INTERVAL } from '../utils/constants.js';
+import { TimeService } from '../utils/time.utils.js';
+import { TimerService } from '../services/timer.service.js';
+import { TIME_UPDATE_INTERVAL } from '../utils/constants.utils.js';
 import { useActiveTimer } from './useActiveTimer.js';
 
 /**

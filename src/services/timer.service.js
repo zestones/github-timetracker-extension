@@ -1,21 +1,21 @@
-import { TimeService } from './time.js';
-import { GitHubService } from './github.js';
-import { StorageService } from './storage.js';
-import { GitHubStorageService } from './github-storage.js';
-import { STORAGE_KEYS } from './constants.js';
-import { IssueStorageService } from "./issue-storage.js";
+import { TimeService } from '../utils/time.utils.js';
+import { GitHubService } from './github.service.js';
+import { StorageService } from './storage.service.js';
+import { GitHubStorageService } from './github-storage.service.js';
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
+import { IssueStorageService } from './issue-storage.service.js';
 
 export class TimerService {
     /** @param {string} issueUrl @returns {Promise<number>} Total seconds */
     static async getTotalTimeForIssue(issueUrl) {
-        /** @type {import('./schema.js').TrackedTimeEntry[]} */
+        /** @type {import('../utils/schema.utils.js').TrackedTimeEntry[]} */
         const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) ?? [];
         return trackedTimes
             .filter(entry => entry.issueUrl === issueUrl)
             .reduce((total, entry) => total + (entry.seconds || 0), 0);
     }
 
-    /** @param {string} issueUrl @param {string|null} [issueTitle] @returns {Promise<import('./schema.js').TimerResult>} */
+    /** @param {string} issueUrl @param {string|null} [issueTitle] @returns {Promise<import('../utils/schema.utils.js').TimerResult>} */
     static async startTimer(issueUrl, issueTitle = null) {
         try {
             const [activeIssueUrl, startTime, issue] = await Promise.all([
@@ -55,7 +55,7 @@ export class TimerService {
         }
     }
 
-    /** @param {string} issueUrl @returns {Promise<import('./schema.js').TimerResult>} */
+    /** @param {string} issueUrl @returns {Promise<import('../utils/schema.utils.js').TimerResult>} */
     static async stopTimer(issueUrl) {
         try {
             const [startTime, githubToken, trackedTimes, existingIssue] = await Promise.all([

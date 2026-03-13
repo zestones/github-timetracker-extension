@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'preact/hooks';
-import { GitHubStorageService } from '../utils/github-storage.js';
-import { GitHubService } from '../utils/github.js';
-import { StorageService } from '../utils/storage.js';
-import { IssueStorageService } from '../utils/issue-storage.js';
-import { STORAGE_KEYS } from '../utils/constants.js';
-import { syncFromGitHub } from '../utils/sync.js';
+import { GitHubStorageService } from '../services/github-storage.service.js';
+import { GitHubService } from '../services/github.service.js';
+import { StorageService } from '../services/storage.service.js';
+import { IssueStorageService } from '../services/issue-storage.service.js';
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
+import { syncFromGitHub } from '../services/sync.service.js';
 import { IconDownload, IconTrash, IconSun, IconMoon, IconMonitor, IconRefresh } from '../icons.jsx';
 
 function downloadFile(content, filename, mimeType) {
@@ -66,7 +66,7 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
     const handleSync = async () => {
         setSyncStatus('syncing');
         try {
-            const { PinnedReposService } = await import('../utils/pinned-repos.js');
+            const { PinnedReposService } = await import('../services/pinned-repos.service.js');
             const repos = await PinnedReposService.getPinnedRepos();
             if (repos.length === 0) {
                 setSyncStatus('no-repos');

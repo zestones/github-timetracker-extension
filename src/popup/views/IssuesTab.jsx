@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'preact/hooks';
 import { IssueRow } from '../../components/IssueRow.jsx';
 import { PinRepoModal } from '../../components/PinRepoModal.jsx';
-import { TimerService } from '../../utils/timer.js';
-import { IssueStorageService } from '../../utils/issue-storage.js';
-import { STORAGE_KEYS } from '../../utils/constants.js';
+import { TimerService } from '../../services/timer.service.js';
+import { IssueStorageService } from '../../services/issue-storage.service.js';
+import { STORAGE_KEYS } from '../../utils/constants.utils.js';
 import { useStorageListener } from '../../hooks/useStorageListener.js';
 import { useActiveTimer } from '../../hooks/useActiveTimer.js';
 import { useIssuesData } from '../../hooks/useIssuesData.js';

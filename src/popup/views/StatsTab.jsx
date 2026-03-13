@@ -1,9 +1,9 @@
 import { useMemo, useState, useCallback, useEffect } from 'preact/hooks';
-import { TimeService } from '../../utils/time.js';
-import { AggregationService } from '../../utils/aggregation.js';
-import { StorageService } from '../../utils/storage.js';
-import { STORAGE_KEYS } from '../../utils/constants.js';
-import { fetchAndMergeEveryoneData } from '../../utils/everyone-data.js';
+import { TimeService } from '../../utils/time.utils.js';
+import { AggregationService } from '../../utils/aggregation.utils.js';
+import { StorageService } from '../../services/storage.service.js';
+import { STORAGE_KEYS } from '../../utils/constants.utils.js';
+import { fetchAndMergeEveryoneData } from '../../services/everyone-data.service.js';
 import { RepoDetailView } from './RepoDetailView.jsx';
 import { IconCalendar, IconX, IconChevronRight, IconUser, IconUsers, IconRefresh } from '../../icons.jsx';
 
