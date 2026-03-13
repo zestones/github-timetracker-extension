@@ -13,6 +13,7 @@ import { useStorageListener } from '../hooks/useStorageListener.js';
 import { useTheme } from '../hooks/useTheme.js';
 import { CacheService } from '../utils/cache.js';
 import { GitHubService } from '../utils/github.js';
+import { syncFromGitHub } from '../utils/sync.js';
 import { IconIssues, IconChart, IconCalendar, IconSettings, IconGitHub } from '../icons.jsx';
 import './App.css';
 
@@ -54,6 +55,16 @@ export function App() {
         };
         loadToken();
     }, []);
+
+    // Auto-sync on popup open when enabled
+    useEffect(() => {
+        if (!token) return;
+        StorageService.get(STORAGE_KEYS.AUTO_SYNC).then(autoSync => {
+            if (autoSync) {
+                syncFromGitHub().catch(e => console.error('Auto-sync failed:', e));
+            }
+        });
+    }, [token]);
 
     const handleTokenChange = (newToken) => {
         setToken(newToken);

@@ -166,15 +166,6 @@ export class GitHubService {
         return { comment: result, commentId: result.id };
     }
 
-    static async recoverSingleIssue(owner, repo, issueNumber) {
-        const username = await this.getCurrentUsername();
-        const comment = await this.findTrackerComment(owner, repo, issueNumber, username);
-        if (!comment) return null;
-        const entries = this.parseTrackerPayload(comment.body);
-        if (!entries) return null;
-        return { entries, commentId: comment.id };
-    }
-
     static async recoverTimesFromRepo(owner, repo) {
         const username = await this.getCurrentUsername();
         const results = [];

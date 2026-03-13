@@ -5,6 +5,7 @@ import { StorageService } from '../../utils/storage.js';
 import { IssueStorageService } from '../../utils/issue-storage.js';
 import { CacheService } from '../../utils/cache.js';
 import { STORAGE_KEYS } from '../../utils/constants.js';
+import { syncFromGitHub } from '../../utils/sync.js';
 import { IconDownload, IconTrash, IconSun, IconMoon, IconMonitor, IconRefresh } from '../../icons.jsx';
 
 function exportCSV(tracked) {
@@ -61,90 +62,12 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
     const handleSync = async () => {
         setSyncStatus('syncing');
         try {
-            const pinnedRepos = await CacheService.getPinnedRepos();
-            if (pinnedRepos.length === 0) {
-                setSyncStatus('no-repos');
-                return;
-            }
-
-            const recovered = await GitHubService.recoverAllTimes(pinnedRepos);
-            if (recovered.length === 0) {
+            const result = await syncFromGitHub();
+            if (result === null) {
                 setSyncStatus('no-data');
-                return;
+            } else {
+                setSyncStatus(`done:${result.importedCount}`);
             }
-
-            // Fetch issue titles from GitHub API for proper display
-            const issueTitleMap = {};
-            const repoSet = new Set(recovered.map(item => {
-                const { owner, repo } = GitHubService.parseIssueUrl(item.issueUrl);
-                return `${owner}/${repo}`;
-            }));
-            for (const fullRepo of repoSet) {
-                const [owner, repoName] = fullRepo.split('/');
-                try {
-                    const issues = await GitHubService.getRepoIssues(owner, repoName);
-                    for (const issue of issues) {
-                        issueTitleMap[`/${owner}/${repoName}/issues/${issue.number}`] = issue.title;
-                    }
-                } catch (e) {
-                    console.error(`Failed to fetch issue titles for ${fullRepo}:`, e);
-                }
-            }
-
-            const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
-            const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) || {};
-            const username = await GitHubService.getCurrentUsername();
-            let importedCount = 0;
-
-            for (const item of recovered) {
-                const commentKey = `${username}:${item.issueUrl}`;
-                commentIds[commentKey] = item.commentId;
-
-                // Get existing local entries for this issue
-                const localEntries = trackedTimes.filter(t => t.issueUrl === item.issueUrl);
-                const localTotal = localEntries.reduce((sum, e) => sum + (e.seconds || 0), 0);
-                const remoteTotal = item.entries.reduce((sum, e) => sum + (e.seconds || 0), 0);
-
-                // Import if no local data or remote has more time
-                if (localEntries.length === 0 || remoteTotal > localTotal) {
-                    // Remove existing local entries for this issue
-                    const filtered = trackedTimes.filter(t => t.issueUrl !== item.issueUrl);
-                    trackedTimes.length = 0;
-                    trackedTimes.push(...filtered);
-
-                    const { owner, repo, issueNumber } = GitHubService.parseIssueUrl(item.issueUrl);
-                    const apiTitle = issueTitleMap[item.issueUrl];
-                    const title = apiTitle
-                        ? `(${owner}) ${repo} | ${apiTitle} | #${issueNumber}`
-                        : `(${owner}) ${repo} | #${issueNumber}`;
-                    for (const entry of item.entries) {
-                        trackedTimes.push({
-                            issueUrl: item.issueUrl,
-                            title,
-                            seconds: entry.seconds,
-                            date: entry.date,
-                        });
-                        importedCount++;
-                    }
-                }
-
-                const issueExists = await IssueStorageService.exists(item.issueUrl);
-                if (!issueExists) {
-                    const { owner, repo, issueNumber } = GitHubService.parseIssueUrl(item.issueUrl);
-                    const apiTitle = issueTitleMap[item.issueUrl];
-                    const title = apiTitle
-                        ? `(${owner}) ${repo} | ${apiTitle} | #${issueNumber}`
-                        : `(${owner}) ${repo} | #${issueNumber}`;
-                    await IssueStorageService.add({
-                        url: item.issueUrl,
-                        title,
-                    });
-                }
-            }
-
-            await StorageService.set(STORAGE_KEYS.TRACKED_TIMES, trackedTimes);
-            await StorageService.set(STORAGE_KEYS.COMMENT_IDS, commentIds);
-            setSyncStatus(`done:${importedCount}`);
         } catch (error) {
             console.error('Sync failed:', error);
             setSyncStatus('error');
@@ -321,9 +244,9 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
                     <div className="mt-3 bg-surface rounded-xl p-3 border border-border-default">
                         <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0 mr-3">
-                                <div className="text-[12px] font-medium text-primary">Auto-recover on page load</div>
+                                <div className="text-[12px] font-medium text-primary">Auto-sync on popup open</div>
                                 <div className="text-[11px] text-muted mt-0.5 leading-snug">
-                                    When you open a GitHub issue page that has no local time data, automatically fetch it from the GitHub comment. Uses 1-2 API calls per issue.
+                                    Automatically sync tracked times from GitHub when you open the extension. Recovers data from all pinned repos.
                                 </div>
                             </div>
                             <button
