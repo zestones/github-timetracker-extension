@@ -1,47 +1,44 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import { GitHubService } from '../utils/github.js';
 import { DEBOUNCE_SEARCH_MS } from '../utils/constants.js';
+import { useDebounce } from '../hooks/useDebounce.js';
 import { IconX, IconSearch, IconCheck, IconPin } from '../icons.jsx';
 
 export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
     const [searching, setSearching] = useState(false);
-    const timerRef = useRef(null);
     const inputRef = useRef(null);
 
     useEffect(() => {
         inputRef.current?.focus();
-        return () => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-        };
     }, []);
+
+    const searchRepos = useDebounce(async (value) => {
+        setSearching(true);
+        try {
+            const repos = await GitHubService.searchRepositories(value);
+            setResults(
+                repos.map((r) => ({
+                    fullName: r.full_name,
+                    owner: r.owner.login,
+                    repo: r.name,
+                    description: r.description,
+                }))
+            );
+        } catch (error) {
+            console.error('Search failed:', error);
+        }
+        setSearching(false);
+    }, DEBOUNCE_SEARCH_MS);
 
     const handleSearch = (value) => {
         setQuery(value);
-        if (timerRef.current) clearTimeout(timerRef.current);
         if (!value.trim()) {
             setResults([]);
             return;
         }
-
-        timerRef.current = setTimeout(async () => {
-            setSearching(true);
-            try {
-                const repos = await GitHubService.searchRepositories(value);
-                setResults(
-                    repos.map((r) => ({
-                        fullName: r.full_name,
-                        owner: r.owner.login,
-                        repo: r.name,
-                        description: r.description,
-                    }))
-                );
-            } catch (error) {
-                console.error('Search failed:', error);
-            }
-            setSearching(false);
-        }, DEBOUNCE_SEARCH_MS);
+        searchRepos(value);
     };
 
     const isPinned = (fullName) => pinnedRepos.some((r) => r.fullName === fullName);

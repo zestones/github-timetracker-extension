@@ -41,7 +41,14 @@ export function App() {
         setShowClearConfirm(false);
     };
 
-    if (!tokenLoaded) return null;
+    if (!tokenLoaded) return (
+        <div className={`w-100 h-140 flex items-center justify-center font-['Inter',system-ui,sans-serif] bg-base ${isDark ? 'dark' : ''}`}>
+            <div className="flex flex-col items-center gap-3">
+                <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                <span className="text-[12px] text-muted">Loading…</span>
+            </div>
+        </div>
+    );
 
     if (!token) {
         return (

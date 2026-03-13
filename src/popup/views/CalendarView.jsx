@@ -36,15 +36,8 @@ export function CalendarView({ tracked }) {
   }, [tracked]);
 
   const selectedDayTracked = useMemo(() => {
-    const startOfSelected = new Date(selectedDate);
-    startOfSelected.setHours(0, 0, 0, 0);
-    const endOfSelected = new Date(startOfSelected);
-    endOfSelected.setDate(startOfSelected.getDate() + 1);
-    return tracked.filter((entry) => {
-      const entryDate = new Date(entry.date);
-      entryDate.setHours(0, 0, 0, 0);
-      return entryDate >= startOfSelected && entryDate < endOfSelected;
-    });
+    const dateStr = TimeService.getLocalDateString(selectedDate);
+    return tracked.filter((entry) => entry.date === dateStr);
   }, [tracked, selectedDate]);
 
   const selectedDayTotalTime = useMemo(() => {
