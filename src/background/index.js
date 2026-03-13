@@ -34,8 +34,17 @@ async function refreshCachedIssues() {
     }
 }
 
-// Set up periodic alarm for cache refresh
-chrome.alarms.create('refreshCache', { periodInMinutes: CACHE_REFRESH_INTERVAL });
+// Create the cache-refresh alarm only once — on install or extension update.
+// Using onInstalled (not top-level) because top-level code runs every time the
+// service worker wakes up, which would reset the alarm countdown and prevent it
+// from ever firing if any event wakes the SW within the period interval.
+chrome.runtime.onInstalled.addListener(() => {
+    chrome.alarms.get('refreshCache', (existing) => {
+        if (!existing) {
+            chrome.alarms.create('refreshCache', { periodInMinutes: CACHE_REFRESH_INTERVAL });
+        }
+    });
+});
 
 chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === 'refreshCache') {
