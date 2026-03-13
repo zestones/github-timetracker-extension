@@ -1,5 +1,7 @@
 export const GITHUB_API_URL = 'https://api.github.com';
+export const SCHEMA_VERSION = 1;
 export const STORAGE_KEYS = {
+    SCHEMA_VERSION: 'schemaVersion',
     GITHUB_TOKEN: 'githubToken',
     ACTIVE_ISSUE: 'activeIssue',
     START_TIME: 'startTime',

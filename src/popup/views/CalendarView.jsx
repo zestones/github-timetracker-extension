@@ -69,10 +69,8 @@ export function CalendarView({ tracked }) {
   const trackedDates = useMemo(() => {
     const dates = new Set();
     tracked.forEach((entry) => {
-      const entryDate = new Date(entry.date);
-      if (!isNaN(entryDate.getTime())) {
-        entryDate.setHours(0, 0, 0, 0);
-        dates.add(entryDate.toISOString().split('T')[0]);
+      if (entry.date && /^\d{4}-\d{2}-\d{2}$/.test(entry.date)) {
+        dates.add(entry.date);
       }
     });
     return Array.from(dates);
@@ -131,10 +129,8 @@ export function CalendarView({ tracked }) {
 
   const isDayTracked = (day) => {
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    date.setHours(0, 0, 0, 0);
-    const dateStr = date.toISOString().split('T')[0];
-    const today = getLocalDate();
-    const todayStr = today.toISOString().split('T')[0];
+    const dateStr = TimeService.getLocalDateString(date);
+    const todayStr = TimeService.getLocalDateString(getLocalDate());
     return trackedDates.includes(dateStr) || dateStr === todayStr;
   };
 

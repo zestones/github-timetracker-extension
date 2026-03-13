@@ -90,8 +90,8 @@ export function StatsTab({ tracked, user }) {
             if (username) {
                 const remoteMe = flatEntries.filter(e => e.user === username);
                 const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) ?? [];
-                const localKeys = new Set(trackedTimes.map(e => `${e.issueUrl}|${e.date}`));
-                const newEntries = remoteMe.filter(e => !localKeys.has(`${e.issueUrl}|${e.date}`));
+                const localKeys = new Set(trackedTimes.map(e => `${e.issueUrl}|${e.date}|${e.seconds}`));
+                const newEntries = remoteMe.filter(e => !localKeys.has(`${e.issueUrl}|${e.date}|${e.seconds}`));
                 if (newEntries.length > 0) {
                     const toAdd = newEntries.map(e => ({
                         issueUrl: e.issueUrl,

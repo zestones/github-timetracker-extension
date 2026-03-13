@@ -1,9 +1,10 @@
 // background/index.js
 import { GitHubService } from '../utils/github.js';
 import { GitHubStorageService } from '../utils/github-storage.js';
-import { CACHE_REFRESH_INTERVAL } from '../utils/constants.js';
+import { CACHE_REFRESH_INTERVAL, SCHEMA_VERSION, STORAGE_KEYS } from '../utils/constants.js';
 import { CacheService } from '../utils/cache.js';
 import { PinnedReposService } from '../utils/pinned-repos.js';
+import { StorageService } from '../utils/storage.js';
 
 async function refreshCachedIssues() {
     const token = await GitHubStorageService.getGitHubToken();
@@ -38,7 +39,13 @@ async function refreshCachedIssues() {
 // Using onInstalled (not top-level) because top-level code runs every time the
 // service worker wakes up, which would reset the alarm countdown and prevent it
 // from ever firing if any event wakes the SW within the period interval.
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(async () => {
+    // Set schema version on install/update for future data migrations
+    const currentVersion = await StorageService.get(STORAGE_KEYS.SCHEMA_VERSION);
+    if (!currentVersion || currentVersion < SCHEMA_VERSION) {
+        await StorageService.set(STORAGE_KEYS.SCHEMA_VERSION, SCHEMA_VERSION);
+    }
+
     chrome.alarms.get('refreshCache', (existing) => {
         if (!existing) {
             chrome.alarms.create('refreshCache', { periodInMinutes: CACHE_REFRESH_INTERVAL });
