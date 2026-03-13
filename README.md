@@ -1,4 +1,4 @@
-# GitHub Time Tracker
+# <img src="docs/screenshots/repos-icon.png" width="48" height="48" alt="icon" style="vertical-align: middle;" /> GitHub Time Tracker
 
 [![CI](https://github.com/zestones/github-timetracker-extension/actions/workflows/ci.yml/badge.svg)](https://github.com/zestones/github-timetracker-extension/actions/workflows/ci.yml) [![GitHub release](https://img.shields.io/github/v/release/zestones/github-timetracker-extension)](https://github.com/zestones/github-timetracker-extension/releases)
 
