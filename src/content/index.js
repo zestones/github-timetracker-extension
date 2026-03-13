@@ -1,7 +1,13 @@
 // content/index.js
-import { injectTimerButton, resetInjectedFlag } from './injectTimerButton.js';
+
+import {
+    CONTAINER_CHECK_INTERVAL_MS,
+    CONTAINER_CHECK_MAX_ATTEMPTS,
+    DEBOUNCE_INJECT_MS,
+    STORAGE_KEYS,
+} from '../utils/constants.utils.js';
 import { isIssuePage } from './helpers.js';
-import { STORAGE_KEYS, DEBOUNCE_INJECT_MS, CONTAINER_CHECK_INTERVAL_MS, CONTAINER_CHECK_MAX_ATTEMPTS } from '../utils/constants.utils.js';
+import { injectTimerButton, resetInjectedFlag } from './injectTimerButton.js';
 
 function debounce(fn, delay) {
     let timeoutId;
@@ -78,7 +84,7 @@ observer.observe(document.body, { childList: true, subtree: true });
 window.addEventListener('popstate', handleNavigation);
 
 // Handle messages from popup/background for timer sync
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.action === 'timerStarted' || message.action === 'timerStopped') {
         if (isIssuePage() && message.issueUrl === location.pathname) {
             const buttonExists = document.querySelector('#track-time-btn');

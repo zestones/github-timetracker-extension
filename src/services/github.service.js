@@ -1,7 +1,12 @@
-import { GITHUB_API_URL, TRACKER_PAYLOAD_PREFIX, buildTrackerMarker, matchesTrackerMarker } from '../utils/constants.utils.js';
+import {
+    buildTrackerMarker,
+    GITHUB_API_URL,
+    matchesTrackerMarker,
+    TRACKER_PAYLOAD_PREFIX,
+} from '../utils/constants.utils.js';
+import { TimeService } from '../utils/time.utils.js';
 import { CacheService } from './cache.service.js';
 import { GitHubStorageService } from './github-storage.service.js';
-import { TimeService } from '../utils/time.utils.js';
 
 export class GitHubService {
     static parseIssueUrl(url) {
@@ -12,7 +17,7 @@ export class GitHubService {
             owner: match[1],
             repo: match[2],
             issueNumber: parseInt(match[3], 10),
-            fullRepo: `${match[1]}/${match[2]}`
+            fullRepo: `${match[1]}/${match[2]}`,
         };
     }
 
@@ -38,8 +43,8 @@ export class GitHubService {
                 Authorization: `token ${token}`,
                 Accept: 'application/vnd.github.v3+json',
                 'Content-Type': 'application/json',
-                ...options.headers
-            }
+                ...options.headers,
+            },
         });
 
         if (!response.ok) {
@@ -51,11 +56,11 @@ export class GitHubService {
     }
 
     static async getUser() {
-        return this.apiRequest('/user');
+        return GitHubService.apiRequest('/user');
     }
 
     static async getRateLimit() {
-        const data = await this.apiRequest('/rate_limit');
+        const data = await GitHubService.apiRequest('/rate_limit');
         const { limit, remaining, reset } = data.rate;
         return { limit, remaining, resetAt: new Date(reset * 1000) };
     }
@@ -65,13 +70,13 @@ export class GitHubService {
     static async getCurrentUsername() {
         const cached = await CacheService.getCachedUser();
         if (cached?.login) return cached.login;
-        const user = await this.getUser();
+        const user = await GitHubService.getUser();
         return user.login;
     }
 
     static buildTrackerCommentBody(entries, username) {
         const sorted = entries
-            .map(e => ({ date: e.date, seconds: Math.floor(e.seconds) }))
+            .map((e) => ({ date: e.date, seconds: Math.floor(e.seconds) }))
             .sort((a, b) => a.date.localeCompare(b.date) || 0);
 
         const totalSeconds = sorted.reduce((sum, e) => sum + e.seconds, 0);
@@ -111,10 +116,10 @@ export class GitHubService {
     static async findTrackerComment(owner, repo, issueNumber, username) {
         let page = 1;
         while (page <= 10) {
-            const comments = await this.apiRequest(
-                `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${issueNumber}/comments?per_page=100&page=${page}`
+            const comments = await GitHubService.apiRequest(
+                `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${issueNumber}/comments?per_page=100&page=${page}`,
             );
-            const found = comments.find(c => c.body && matchesTrackerMarker(c.body, username));
+            const found = comments.find((c) => c.body && matchesTrackerMarker(c.body, username));
             if (found) return found;
             if (comments.length < 100) break;
             page++;
@@ -123,35 +128,35 @@ export class GitHubService {
     }
 
     static async createOrUpdateTrackerComment({ owner, repo, issueNumber, entries, cachedCommentId }) {
-        const username = await this.getCurrentUsername();
-        const body = this.buildTrackerCommentBody(entries, username);
+        const username = await GitHubService.getCurrentUsername();
+        const body = GitHubService.buildTrackerCommentBody(entries, username);
 
         // Try cached comment ID first — verify ownership before patching
         if (cachedCommentId) {
             try {
-                const existing = await this.apiRequest(
-                    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/comments/${cachedCommentId}`
+                const existing = await GitHubService.apiRequest(
+                    `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/comments/${cachedCommentId}`,
                 );
                 if (existing.user?.login === username && matchesTrackerMarker(existing.body || '', username)) {
-                    const result = await this.apiRequest(
+                    const result = await GitHubService.apiRequest(
                         `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/comments/${cachedCommentId}`,
-                        { method: 'PATCH', body: JSON.stringify({ body }) }
+                        { method: 'PATCH', body: JSON.stringify({ body }) },
                     );
                     return { comment: result, commentId: result.id };
                 }
                 // Cached comment belongs to different user, search for own comment
-            } catch (e) {
+            } catch (_e) {
                 // Cached comment ID failed, fall through to search
             }
         }
 
         // Search for existing tracker comment owned by current user
-        const existing = await this.findTrackerComment(owner, repo, issueNumber, username);
+        const existing = await GitHubService.findTrackerComment(owner, repo, issueNumber, username);
         if (existing && existing.user?.login === username) {
             try {
-                const result = await this.apiRequest(
+                const result = await GitHubService.apiRequest(
                     `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/comments/${existing.id}`,
-                    { method: 'PATCH', body: JSON.stringify({ body }) }
+                    { method: 'PATCH', body: JSON.stringify({ body }) },
                 );
                 return { comment: result, commentId: result.id };
             } catch (e) {
@@ -160,24 +165,24 @@ export class GitHubService {
         }
 
         // Create new comment
-        const result = await this.apiRequest(
+        const result = await GitHubService.apiRequest(
             `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/${issueNumber}/comments`,
-            { method: 'POST', body: JSON.stringify({ body }) }
+            { method: 'POST', body: JSON.stringify({ body }) },
         );
         return { comment: result, commentId: result.id };
     }
 
     static async recoverTimesFromRepo(owner, repo) {
-        const username = await this.getCurrentUsername();
+        const username = await GitHubService.getCurrentUsername();
         const results = [];
         let page = 1;
         while (page <= 50) {
-            const comments = await this.apiRequest(
-                `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/comments?per_page=100&page=${page}&sort=updated&direction=desc`
+            const comments = await GitHubService.apiRequest(
+                `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/comments?per_page=100&page=${page}&sort=updated&direction=desc`,
             );
             for (const comment of comments) {
                 if (comment.body && matchesTrackerMarker(comment.body, username)) {
-                    const entries = this.parseTrackerPayload(comment.body);
+                    const entries = GitHubService.parseTrackerPayload(comment.body);
                     if (entries) {
                         const issueMatch = comment.issue_url.match(/\/issues\/(\d+)$/);
                         if (issueMatch) {
@@ -201,7 +206,7 @@ export class GitHubService {
         for (const repo of pinnedRepos) {
             const [owner, repoName] = repo.fullName.split('/');
             try {
-                const repoResults = await this.recoverTimesFromRepo(owner, repoName);
+                const repoResults = await GitHubService.recoverTimesFromRepo(owner, repoName);
                 allRecovered.push(...repoResults);
             } catch (e) {
                 console.error(`Recovery failed for ${repo.fullName}:`, e);
@@ -214,12 +219,12 @@ export class GitHubService {
         const results = [];
         let page = 1;
         while (page <= 50) {
-            const comments = await this.apiRequest(
-                `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/comments?per_page=100&page=${page}&sort=updated&direction=desc`
+            const comments = await GitHubService.apiRequest(
+                `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/comments?per_page=100&page=${page}&sort=updated&direction=desc`,
             );
             for (const comment of comments) {
                 if (comment.body && matchesTrackerMarker(comment.body)) {
-                    const entries = this.parseTrackerPayload(comment.body);
+                    const entries = GitHubService.parseTrackerPayload(comment.body);
                     if (entries) {
                         const issueMatch = comment.issue_url.match(/\/issues\/(\d+)$/);
                         if (issueMatch) {
@@ -244,7 +249,7 @@ export class GitHubService {
         for (const repo of pinnedRepos) {
             const [owner, repoName] = repo.fullName.split('/');
             try {
-                const repoResults = await this.recoverAllUsersTimesFromRepo(owner, repoName);
+                const repoResults = await GitHubService.recoverAllUsersTimesFromRepo(owner, repoName);
                 allData.push(...repoResults);
             } catch (e) {
                 console.error(`Fetch all users failed for ${repo.fullName}:`, e);
@@ -254,30 +259,30 @@ export class GitHubService {
     }
 
     static async searchRepositories(query) {
-        const results = await this.apiRequest(
-            `/search/repositories?q=${encodeURIComponent(query)}&per_page=20&sort=updated`
+        const results = await GitHubService.apiRequest(
+            `/search/repositories?q=${encodeURIComponent(query)}&per_page=20&sort=updated`,
         );
         return results.items || [];
     }
 
     static async getRepoIssues(owner, repo, { state = 'all' } = {}) {
-        const issues = await this.apiRequest(
-            `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues?state=${state}&per_page=100&sort=updated`
+        const issues = await GitHubService.apiRequest(
+            `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues?state=${state}&per_page=100&sort=updated`,
         );
         // Filter out pull requests (GitHub API returns PRs in /issues endpoint)
         return issues.filter((issue) => !issue.pull_request);
     }
 
     static async getAssignedIssues({ state = 'all' } = {}) {
-        const issues = await this.apiRequest(
-            `/issues?filter=assigned&state=${state}&per_page=100&sort=updated`
+        const issues = await GitHubService.apiRequest(
+            `/issues?filter=assigned&state=${state}&per_page=100&sort=updated`,
         );
         return issues.filter((issue) => !issue.pull_request);
     }
 
     static async getCreatedIssues({ state = 'all' } = {}) {
-        const issues = await this.apiRequest(
-            `/issues?filter=created&state=${state}&per_page=100&sort=updated`
+        const issues = await GitHubService.apiRequest(
+            `/issues?filter=created&state=${state}&per_page=100&sort=updated`,
         );
         return issues.filter((issue) => !issue.pull_request);
     }

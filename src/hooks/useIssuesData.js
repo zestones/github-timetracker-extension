@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import { CacheService } from '../services/cache.service.js';
-import { PinnedReposService } from '../services/pinned-repos.service.js';
 import { GitHubService } from '../services/github.service.js';
+import { PinnedReposService } from '../services/pinned-repos.service.js';
 
 export function useIssuesData() {
     const [pinnedRepos, setPinnedRepos] = useState([]);
@@ -34,7 +34,11 @@ export function useIssuesData() {
             } else {
                 try {
                     const user = await GitHubService.getUser();
-                    await CacheService.setCachedUser({ login: user.login, avatar_url: user.avatar_url, name: user.name });
+                    await CacheService.setCachedUser({
+                        login: user.login,
+                        avatar_url: user.avatar_url,
+                        name: user.name,
+                    });
                     setCurrentUser(user.login);
                 } catch (e) {
                     console.error('Failed to fetch user:', e);
@@ -53,12 +57,15 @@ export function useIssuesData() {
         load();
     }, [refreshRepoIssues]);
 
-    const pinRepo = useCallback(async (repo) => {
-        await PinnedReposService.addPinnedRepo(repo);
-        const updated = await PinnedReposService.getPinnedRepos();
-        setPinnedRepos(updated);
-        refreshRepoIssues(repo);
-    }, [refreshRepoIssues]);
+    const pinRepo = useCallback(
+        async (repo) => {
+            await PinnedReposService.addPinnedRepo(repo);
+            const updated = await PinnedReposService.getPinnedRepos();
+            setPinnedRepos(updated);
+            refreshRepoIssues(repo);
+        },
+        [refreshRepoIssues],
+    );
 
     const unpinRepo = useCallback(async (fullName) => {
         await PinnedReposService.removePinnedRepo(fullName);

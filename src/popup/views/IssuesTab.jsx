@@ -1,14 +1,14 @@
-import { useState, useEffect, useMemo } from 'preact/hooks';
+import { useEffect, useMemo, useState } from 'preact/hooks';
 import { IssueRow } from '../../components/IssueRow.jsx';
 import { PinRepoModal } from '../../components/PinRepoModal.jsx';
-import { TimerService } from '../../services/timer.service.js';
-import { IssueStorageService } from '../../services/issue-storage.service.js';
-import { STORAGE_KEYS } from '../../utils/constants.utils.js';
-import { useStorageListener } from '../../hooks/useStorageListener.js';
+import { SearchInput } from '../../components/SearchInput.jsx';
 import { useActiveTimer } from '../../hooks/useActiveTimer.js';
 import { useIssuesData } from '../../hooks/useIssuesData.js';
-import { SearchInput } from '../../components/SearchInput.jsx';
-import { IconPlus, IconChevronDown, IconChevronRight, IconRefresh, IconX, IconPin } from '../../icons.jsx';
+import { useStorageListener } from '../../hooks/useStorageListener.js';
+import { IconChevronDown, IconChevronRight, IconPin, IconPlus, IconRefresh, IconX } from '../../icons.jsx';
+import { IssueStorageService } from '../../services/issue-storage.service.js';
+import { TimerService } from '../../services/timer.service.js';
+import { STORAGE_KEYS } from '../../utils/constants.utils.js';
 
 export function IssuesTab() {
     const [expandedRepos, setExpandedRepos] = useState({});
@@ -82,11 +82,7 @@ export function IssuesTab() {
     return (
         <div className="p-4">
             {/* Search */}
-            <SearchInput
-                placeholder="Search issues..."
-                value={searchTerm}
-                onInput={setSearchTerm}
-            />
+            <SearchInput placeholder="Search issues..." value={searchTerm} onInput={setSearchTerm} />
 
             {/* Filter pills */}
             <div className="flex gap-1.5 mb-4 flex-wrap">
@@ -97,6 +93,7 @@ export function IssuesTab() {
                     { id: 'closed', label: 'Closed' },
                 ].map((f) => (
                     <button
+                        type="button"
                         key={f.id}
                         onClick={() => setFilter(f.id)}
                         className={`text-[11px] px-2.5 py-1 rounded-full cursor-pointer transition-colors font-medium ${filter === f.id
@@ -117,7 +114,9 @@ export function IssuesTab() {
                     ) : (
                         allFilteredIssues.map((issue) => (
                             <div key={issue.issueUrl}>
-                                <div className="text-[11px] text-muted px-2 mt-2 mb-0.5 font-medium">{issue.repoName}</div>
+                                <div className="text-[11px] text-muted px-2 mt-2 mb-0.5 font-medium">
+                                    {issue.repoName}
+                                </div>
                                 <IssueRow
                                     issue={issue}
                                     isActive={activeIssue === issue.issueUrl}
@@ -139,6 +138,7 @@ export function IssuesTab() {
                             Pinned Repos
                         </span>
                         <button
+                            type="button"
                             onClick={() => setShowPinModal(true)}
                             className="flex items-center gap-0.5 text-[11px] text-accent hover:text-accent-hover cursor-pointer font-medium"
                         >
@@ -154,6 +154,7 @@ export function IssuesTab() {
                             </div>
                             <div className="text-[13px] text-tertiary mb-1">No pinned repos yet</div>
                             <button
+                                type="button"
                                 onClick={() => setShowPinModal(true)}
                                 className="text-[13px] text-accent hover:text-accent-hover cursor-pointer font-medium"
                             >
@@ -165,13 +166,24 @@ export function IssuesTab() {
                     {pinnedRepos.map((repo) => (
                         <div key={repo.fullName} className="mb-1">
                             <div
-                                className="flex items-center justify-between py-2 cursor-pointer hover:bg-surface rounded-lg px-2 transition-colors"
+                                className="flex items-center justify-between py-2 cursor-pointer hover:bg-surface rounded-lg px-2 transition-colors w-full"
                                 onClick={() =>
                                     setExpandedRepos((prev) => ({
                                         ...prev,
                                         [repo.fullName]: !prev[repo.fullName],
                                     }))
                                 }
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        setExpandedRepos((prev) => ({
+                                            ...prev,
+                                            [repo.fullName]: !prev[repo.fullName],
+                                        }));
+                                    }
+                                }}
+                                role="button"
+                                tabIndex={0}
                             >
                                 <div className="flex items-center gap-1.5">
                                     <span className="text-muted">
@@ -181,15 +193,14 @@ export function IssuesTab() {
                                             <IconChevronRight size={14} />
                                         )}
                                     </span>
-                                    <span className="text-[13px] font-medium text-primary">
-                                        {repo.fullName}
-                                    </span>
+                                    <span className="text-[13px] font-medium text-primary">{repo.fullName}</span>
                                     {loading[repo.fullName] && (
                                         <span className="text-[11px] text-muted">loading...</span>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <button
+                                        type="button"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             refreshRepoIssues(repo);
@@ -200,6 +211,7 @@ export function IssuesTab() {
                                         <IconRefresh size={13} />
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={async (e) => {
                                             e.stopPropagation();
                                             await unpinRepo(repo.fullName);
@@ -215,26 +227,28 @@ export function IssuesTab() {
                             {expandedRepos[repo.fullName] && (
                                 <div className="ml-4 pl-3 border-l-2 border-border-subtle">
                                     {loading[repo.fullName] && !repoIssues[repo.fullName] ? (
-                                        <div className="text-[11px] text-muted py-3 pl-2">
-                                            Fetching issues...
-                                        </div>
+                                        <div className="text-[11px] text-muted py-3 pl-2">Fetching issues...</div>
                                     ) : (repoIssues[repo.fullName] || []).filter(filterIssue).length === 0 ? (
                                         <div className="text-[11px] text-muted py-3 pl-2">
-                                            {filter === 'closed' ? 'No closed issues' : filter === 'open' ? 'No open issues' : 'No matching issues'}
+                                            {filter === 'closed'
+                                                ? 'No closed issues'
+                                                : filter === 'open'
+                                                    ? 'No open issues'
+                                                    : 'No matching issues'}
                                         </div>
                                     ) : (
-                                        (repoIssues[repo.fullName] || []).filter(filterIssue).map((issue) => (
-                                            <IssueRow
-                                                key={issue.issueUrl}
-                                                issue={issue}
-                                                isActive={activeIssue === issue.issueUrl}
-                                                onStart={handleStart}
-                                                onStop={handleStop}
-                                                trackedSeconds={
-                                                    trackedTimeByIssue[issue.issueUrl] || 0
-                                                }
-                                            />
-                                        ))
+                                        (repoIssues[repo.fullName] || [])
+                                            .filter(filterIssue)
+                                            .map((issue) => (
+                                                <IssueRow
+                                                    key={issue.issueUrl}
+                                                    issue={issue}
+                                                    isActive={activeIssue === issue.issueUrl}
+                                                    onStart={handleStart}
+                                                    onStop={handleStop}
+                                                    trackedSeconds={trackedTimeByIssue[issue.issueUrl] || 0}
+                                                />
+                                            ))
                                     )}
                                 </div>
                             )}

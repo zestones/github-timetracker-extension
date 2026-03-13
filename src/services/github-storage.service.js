@@ -10,7 +10,7 @@ export class GitHubStorageService {
 
     static async getGitHubToken() {
         const token = await StorageService.get(STORAGE_KEYS.GITHUB_TOKEN);
-        if (token && !this.isValidTokenFormat(token)) {
+        if (token && !GitHubStorageService.isValidTokenFormat(token)) {
             console.warn('Stored GitHub token has unexpected format');
             return null;
         }
@@ -18,7 +18,7 @@ export class GitHubStorageService {
     }
 
     static async setGitHubToken(token) {
-        if (!this.isValidTokenFormat(token)) {
+        if (!GitHubStorageService.isValidTokenFormat(token)) {
             throw new Error('Invalid GitHub token format');
         }
         return StorageService.set(STORAGE_KEYS.GITHUB_TOKEN, token);
@@ -29,10 +29,10 @@ export class GitHubStorageService {
     }
 
     static async validateGitHubToken(token) {
-        if (!this.isValidTokenFormat(token)) return false;
+        if (!GitHubStorageService.isValidTokenFormat(token)) return false;
         try {
             const response = await fetch('https://api.github.com/user', {
-                headers: { Authorization: `token ${token}` }
+                headers: { Authorization: `token ${token}` },
             });
             return response.ok;
         } catch (error) {

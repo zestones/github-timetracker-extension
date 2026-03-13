@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'preact/hooks';
+import { useMemo, useState } from 'preact/hooks';
+import { SearchInput } from '../../components/SearchInput.jsx';
+import { useElapsedTimer } from '../../hooks/useElapsedTimer.js';
+import { IconChevronLeft, IconChevronRight, IconClock } from '../../icons.jsx';
 import { TimeService } from '../../utils/time.utils.js';
 import { TrackedList } from './TrackedList.jsx';
-import { useElapsedTimer } from '../../hooks/useElapsedTimer.js';
-import { SearchInput } from '../../components/SearchInput.jsx';
-import { IconChevronLeft, IconChevronRight, IconClock } from '../../icons.jsx';
 
 export function CalendarView({ tracked }) {
   const getLocalDate = () => {
@@ -48,9 +48,10 @@ export function CalendarView({ tracked }) {
 
   const filteredTracked = useMemo(() => {
     if (!searchTerm) return selectedDayTracked;
-    return selectedDayTracked.filter((entry) =>
-      entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.issueUrl.toLowerCase().includes(searchTerm.toLowerCase())
+    return selectedDayTracked.filter(
+      (entry) =>
+        entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        entry.issueUrl.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [selectedDayTracked, searchTerm]);
 
@@ -64,10 +65,7 @@ export function CalendarView({ tracked }) {
     }, {});
     return Object.values(grouped).map((e) => ({
       ...e,
-      displayTime:
-        e.issueUrl === activeIssue && elapsedTime
-          ? elapsedTime
-          : TimeService.formatTime(e.seconds),
+      displayTime: e.issueUrl === activeIssue && elapsedTime ? elapsedTime : TimeService.formatTime(e.seconds),
     }));
   }, [filteredTracked, elapsedTime, activeIssue]);
 
@@ -104,6 +102,7 @@ export function CalendarView({ tracked }) {
       {/* Month navigation */}
       <div className="flex justify-between items-center mb-3">
         <button
+          type="button"
           onClick={prevMonth}
           className="p-1 text-muted hover:text-secondary hover:bg-surface rounded-lg cursor-pointer transition-colors"
         >
@@ -113,6 +112,7 @@ export function CalendarView({ tracked }) {
           {currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' })}
         </span>
         <button
+          type="button"
           onClick={nextMonth}
           className="p-1 text-muted hover:text-secondary hover:bg-surface rounded-lg cursor-pointer transition-colors"
         >
@@ -123,7 +123,9 @@ export function CalendarView({ tracked }) {
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-0.5 text-center mb-4">
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-          <div key={i} className="text-[10px] font-medium text-muted py-1">{day}</div>
+          <div key={i} className="text-[10px] font-medium text-muted py-1">
+            {day}
+          </div>
         ))}
         {paddingDays.map((_, i) => (
           <div key={`pad-${i}`} className="h-8" />
@@ -133,20 +135,22 @@ export function CalendarView({ tracked }) {
           const selected = isSelectedDay(day);
           const today = isToday(day);
           return (
-            <div
+            <button
+              type="button"
               key={day}
-              className={`h-8 flex items-center justify-center rounded-lg text-[12px] transition-colors ${selected
-                ? 'bg-accent text-white font-medium cursor-pointer'
-                : tracked
-                  ? 'bg-accent-subtle text-accent-text cursor-pointer hover:bg-accent-ring font-medium'
-                  : today
-                    ? 'text-primary font-medium'
-                    : 'text-faint'
+              className={`h-8 w-full flex items-center justify-center rounded-lg text-[12px] transition-colors ${selected
+                  ? 'bg-accent text-white font-medium cursor-pointer'
+                  : tracked
+                    ? 'bg-accent-subtle text-accent-text cursor-pointer hover:bg-accent-ring font-medium'
+                    : today
+                      ? 'text-primary font-medium'
+                      : 'text-faint'
                 } ${tracked || today ? 'cursor-pointer' : ''}`}
               onClick={() => (tracked || today) && selectDay(day)}
+              tabIndex={tracked || today ? 0 : -1}
             >
               {day}
-            </div>
+            </button>
           );
         })}
       </div>
@@ -163,17 +167,11 @@ export function CalendarView({ tracked }) {
       </div>
 
       {/* Search */}
-      <SearchInput
-        placeholder="Search entries..."
-        value={searchTerm}
-        onInput={setSearchTerm}
-      />
+      <SearchInput placeholder="Search entries..." value={searchTerm} onInput={setSearchTerm} />
 
       {/* Entries */}
       {entries.length === 0 ? (
-        <div className="text-[13px] text-muted text-center py-6">
-          No entries for this day
-        </div>
+        <div className="text-[13px] text-muted text-center py-6">No entries for this day</div>
       ) : (
         <TrackedList entries={entries} showTimerControls={true} />
       )}

@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'preact/hooks';
+import { useCallback, useEffect, useRef } from 'preact/hooks';
 
 export function useDebounce(callback, delay) {
     const timerRef = useRef(null);
@@ -12,8 +12,11 @@ export function useDebounce(callback, delay) {
         };
     }, []);
 
-    return useCallback((...args) => {
-        if (timerRef.current) clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => callbackRef.current(...args), delay);
-    }, [delay]);
+    return useCallback(
+        (...args) => {
+            if (timerRef.current) clearTimeout(timerRef.current);
+            timerRef.current = setTimeout(() => callbackRef.current(...args), delay);
+        },
+        [delay],
+    );
 }

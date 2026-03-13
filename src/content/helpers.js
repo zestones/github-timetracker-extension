@@ -9,6 +9,7 @@ export function isIssuePage() {
 export function getIssueTitle() {
     return (
         document.querySelector('span.js-issue-title')?.textContent?.trim() ||
-        document.querySelector("[data-testid='issue-title']")?.textContent?.trim()
-    ) || null;
+        document.querySelector("[data-testid='issue-title']")?.textContent?.trim() ||
+        null
+    );
 }

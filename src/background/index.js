@@ -1,10 +1,11 @@
 // background/index.js
+
+import { CacheService } from '../services/cache.service.js';
 import { GitHubService } from '../services/github.service.js';
 import { GitHubStorageService } from '../services/github-storage.service.js';
-import { CACHE_REFRESH_INTERVAL, SCHEMA_VERSION, STORAGE_KEYS } from '../utils/constants.utils.js';
-import { CacheService } from '../services/cache.service.js';
 import { PinnedReposService } from '../services/pinned-repos.service.js';
 import { StorageService } from '../services/storage.service.js';
+import { CACHE_REFRESH_INTERVAL, SCHEMA_VERSION, STORAGE_KEYS } from '../utils/constants.utils.js';
 
 async function refreshCachedIssues() {
     const token = await GitHubStorageService.getGitHubToken();
@@ -70,7 +71,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // Returns true to keep the message channel open — this tells Chrome the response
 // will be sent asynchronously, AND keeps the service worker alive until sendResponse
 // is called (prevents the SW from being killed mid-forwarding).
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.action === 'timerStarted' || message.action === 'timerStopped') {
         chrome.tabs.query({ url: 'https://github.com/*' }, (tabs) => {
             tabs.forEach((tab) => {

@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { useDebounce } from '../hooks/useDebounce.js';
+import { IconCheck, IconPin, IconX } from '../icons.jsx';
 import { GitHubService } from '../services/github.service.js';
 import { DEBOUNCE_SEARCH_MS } from '../utils/constants.utils.js';
-import { useDebounce } from '../hooks/useDebounce.js';
 import { SearchInput } from './SearchInput.jsx';
-import { IconX, IconCheck, IconPin } from '../icons.jsx';
 
 export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
     const [query, setQuery] = useState('');
@@ -25,7 +25,7 @@ export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
                     owner: r.owner.login,
                     repo: r.name,
                     description: r.description,
-                }))
+                })),
             );
         } catch (error) {
             console.error('Search failed:', error);
@@ -51,6 +51,7 @@ export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="text-[14px] font-semibold text-primary">Pin a Repository</h3>
                         <button
+                            type="button"
                             onClick={onClose}
                             className="text-muted hover:text-secondary cursor-pointer p-0.5 rounded-md hover:bg-raised transition-colors"
                         >
@@ -66,9 +67,7 @@ export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
                     />
                 </div>
                 <div className="overflow-y-auto flex-1 px-2 pb-3 popup-scroll">
-                    {searching && (
-                        <div className="text-[13px] text-muted text-center py-8">Searching...</div>
-                    )}
+                    {searching && <div className="text-[13px] text-muted text-center py-8">Searching...</div>}
                     {!searching && query && results.length === 0 && (
                         <div className="text-[13px] text-muted text-center py-8">No repositories found</div>
                     )}
@@ -79,31 +78,33 @@ export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
                                 className="flex items-center gap-2 p-2.5 hover:bg-raised rounded-lg transition-colors"
                             >
                                 <div className="flex-1 min-w-0">
-                                    <div className="text-[13px] font-medium text-primary truncate">
-                                        {repo.fullName}
-                                    </div>
+                                    <div className="text-[13px] font-medium text-primary truncate">{repo.fullName}</div>
                                     {repo.description && (
-                                        <div className="text-[11px] text-muted truncate mt-0.5">
-                                            {repo.description}
-                                        </div>
+                                        <div className="text-[11px] text-muted truncate mt-0.5">{repo.description}</div>
                                     )}
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         if (!isPinned(repo.fullName)) {
                                             onPin(repo);
                                         }
                                     }}
                                     disabled={isPinned(repo.fullName)}
-                                    className={`shrink-0 flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-md cursor-pointer transition-colors ${isPinned(repo.fullName)
-                                        ? 'bg-raised text-muted cursor-default'
-                                        : 'bg-accent-subtle text-accent-text hover:bg-accent-ring'
-                                        }`}
+                                    className={`shrink-0 flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-md cursor-pointer transition-colors ${
+                                        isPinned(repo.fullName)
+                                            ? 'bg-raised text-muted cursor-default'
+                                            : 'bg-accent-subtle text-accent-text hover:bg-accent-ring'
+                                    }`}
                                 >
                                     {isPinned(repo.fullName) ? (
-                                        <><IconCheck size={12} /> Pinned</>
+                                        <>
+                                            <IconCheck size={12} /> Pinned
+                                        </>
                                     ) : (
-                                        <><IconPin size={12} /> Pin</>
+                                        <>
+                                            <IconPin size={12} /> Pin
+                                        </>
                                     )}
                                 </button>
                             </div>

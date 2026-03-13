@@ -1,8 +1,8 @@
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
 import { GitHubService } from './github.service.js';
-import { StorageService } from './storage.service.js';
 import { IssueStorageService } from './issue-storage.service.js';
 import { PinnedReposService } from './pinned-repos.service.js';
-import { STORAGE_KEYS } from '../utils/constants.utils.js';
+import { StorageService } from './storage.service.js';
 
 /**
  * Recovers tracked times from GitHub comments for all pinned repos.
@@ -18,10 +18,12 @@ export async function syncFromGitHub() {
 
     // Fetch issue titles from GitHub API for proper display
     const issueTitleMap = {};
-    const repoSet = new Set(recovered.map(item => {
-        const { owner, repo } = GitHubService.parseIssueUrl(item.issueUrl);
-        return `${owner}/${repo}`;
-    }));
+    const repoSet = new Set(
+        recovered.map((item) => {
+            const { owner, repo } = GitHubService.parseIssueUrl(item.issueUrl);
+            return `${owner}/${repo}`;
+        }),
+    );
     for (const fullRepo of repoSet) {
         const [owner, repoName] = fullRepo.split('/');
         try {
@@ -43,12 +45,12 @@ export async function syncFromGitHub() {
         const commentKey = `${username}:${item.issueUrl}`;
         commentIds[commentKey] = item.commentId;
 
-        const localEntries = trackedTimes.filter(t => t.issueUrl === item.issueUrl);
+        const localEntries = trackedTimes.filter((t) => t.issueUrl === item.issueUrl);
         const localTotal = localEntries.reduce((sum, e) => sum + (e.seconds || 0), 0);
         const remoteTotal = item.entries.reduce((sum, e) => sum + (e.seconds || 0), 0);
 
         if (localEntries.length === 0 || remoteTotal > localTotal) {
-            const filtered = trackedTimes.filter(t => t.issueUrl !== item.issueUrl);
+            const filtered = trackedTimes.filter((t) => t.issueUrl !== item.issueUrl);
             trackedTimes.length = 0;
             trackedTimes.push(...filtered);
 

@@ -1,8 +1,8 @@
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
 import { GitHubService } from './github.service.js';
 import { IssueStorageService } from './issue-storage.service.js';
 import { PinnedReposService } from './pinned-repos.service.js';
 import { StorageService } from './storage.service.js';
-import { STORAGE_KEYS } from '../utils/constants.utils.js';
 
 /**
  * Build a title map from local issues and tracked entries,
@@ -68,31 +68,33 @@ export async function fetchAndMergeEveryoneData(username, tracked) {
     const allUsersData = await GitHubService.fetchAllUsersData(pinnedRepos);
     const titleMap = await buildTitleMap(allUsersData, tracked);
 
-    const flatEntries = allUsersData.flatMap(item =>
-        item.entries.map(e => ({
+    const flatEntries = allUsersData.flatMap((item) =>
+        item.entries.map((e) => ({
             issueUrl: item.issueUrl,
             title: titleMap[item.issueUrl] || `#${item.issueUrl.split('/').pop()}`,
             seconds: e.seconds,
             date: e.date,
             user: item.user,
-        }))
+        })),
     );
 
     await StorageService.set(STORAGE_KEYS.EVERYONE_DATA, flatEntries);
 
     // Merge current user's remote entries into local storage
     if (username) {
-        const remoteMe = flatEntries.filter(e => e.user === username);
+        const remoteMe = flatEntries.filter((e) => e.user === username);
         const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) ?? [];
-        const localKeys = new Set(trackedTimes.map(e => `${e.issueUrl}|${e.date}|${e.seconds}`));
-        const newEntries = remoteMe.filter(e => !localKeys.has(`${e.issueUrl}|${e.date}|${e.seconds}`));
+        const localKeys = new Set(trackedTimes.map((e) => `${e.issueUrl}|${e.date}|${e.seconds}`));
+        const newEntries = remoteMe.filter((e) => !localKeys.has(`${e.issueUrl}|${e.date}|${e.seconds}`));
         if (newEntries.length > 0) {
-            trackedTimes.push(...newEntries.map(e => ({
-                issueUrl: e.issueUrl,
-                title: e.title,
-                seconds: e.seconds,
-                date: e.date,
-            })));
+            trackedTimes.push(
+                ...newEntries.map((e) => ({
+                    issueUrl: e.issueUrl,
+                    title: e.title,
+                    seconds: e.seconds,
+                    date: e.date,
+                })),
+            );
             await StorageService.set(STORAGE_KEYS.TRACKED_TIMES, trackedTimes);
         }
     }

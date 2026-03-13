@@ -21,11 +21,11 @@ export class TimeService {
 
     static timeStringSince(startTime, offsetSeconds = 0) {
         const date = new Date(startTime);
-        if (isNaN(date.getTime())) {
-            return this.formatTime(0, offsetSeconds);
+        if (Number.isNaN(date.getTime())) {
+            return TimeService.formatTime(0, offsetSeconds);
         }
         const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-        return this.formatTime(seconds, offsetSeconds);
+        return TimeService.formatTime(seconds, offsetSeconds);
     }
 
     static getLocalDateString(date = new Date()) {

@@ -15,7 +15,7 @@ export const STORAGE_KEYS = {
     EVERYONE_DATA: 'everyoneData',
 };
 export const CACHE_PREFIX = 'cache:';
-export const CACHE_TTL = 5 * 60 * 1000;   // 5 minutes
+export const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 export const CACHE_REFRESH_INTERVAL = 15; // minutes, for chrome.alarms
 export const TIME_UPDATE_INTERVAL = 1000;
 

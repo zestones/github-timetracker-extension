@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
-import { GitHubStorageService } from '../services/github-storage.service.js';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import { CacheService } from '../services/cache.service.js';
 import { GitHubService } from '../services/github.service.js';
+import { GitHubStorageService } from '../services/github-storage.service.js';
 
 export function useAuth() {
     const [token, setToken] = useState('');
@@ -16,7 +16,7 @@ export function useAuth() {
             const savedToken = await GitHubStorageService.getGitHubToken();
             if (savedToken) {
                 setToken(savedToken);
-                setMaskedToken(savedToken.slice(0, 4) + '••••••••');
+                setMaskedToken(`${savedToken.slice(0, 4)}••••••••`);
 
                 const cachedUser = await CacheService.getCachedUser();
                 if (cachedUser) {
@@ -24,7 +24,11 @@ export function useAuth() {
                 } else {
                     try {
                         const userData = await GitHubService.getUser();
-                        const userInfo = { login: userData.login, avatar_url: userData.avatar_url, name: userData.name };
+                        const userInfo = {
+                            login: userData.login,
+                            avatar_url: userData.avatar_url,
+                            name: userData.name,
+                        };
                         await CacheService.setCachedUser(userInfo);
                         setUser(userInfo);
                     } catch (e) {
@@ -40,12 +44,14 @@ export function useAuth() {
     const handleTokenChange = useCallback((newToken) => {
         setToken(newToken);
         if (newToken) {
-            setMaskedToken(newToken.slice(0, 4) + '••••••••');
-            GitHubService.getUser().then(async (userData) => {
-                const userInfo = { login: userData.login, avatar_url: userData.avatar_url, name: userData.name };
-                await CacheService.setCachedUser(userInfo);
-                setUser(userInfo);
-            }).catch(() => setUser(null));
+            setMaskedToken(`${newToken.slice(0, 4)}••••••••`);
+            GitHubService.getUser()
+                .then(async (userData) => {
+                    const userInfo = { login: userData.login, avatar_url: userData.avatar_url, name: userData.name };
+                    await CacheService.setCachedUser(userInfo);
+                    setUser(userInfo);
+                })
+                .catch(() => setUser(null));
         } else {
             setMaskedToken('no token');
             setUser(null);
@@ -64,5 +70,15 @@ export function useAuth() {
         }
     }, [tokenInput, handleTokenChange]);
 
-    return { token, maskedToken, user, tokenLoaded, tokenInput, tokenError, setTokenInput, saveToken, handleTokenChange };
+    return {
+        token,
+        maskedToken,
+        user,
+        tokenLoaded,
+        tokenInput,
+        tokenError,
+        setTokenInput,
+        saveToken,
+        handleTokenChange,
+    };
 }

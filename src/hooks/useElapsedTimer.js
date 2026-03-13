@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'preact/hooks';
-import { TimeService } from '../utils/time.utils.js';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { TimerService } from '../services/timer.service.js';
 import { TIME_UPDATE_INTERVAL } from '../utils/constants.utils.js';
+import { TimeService } from '../utils/time.utils.js';
 import { useActiveTimer } from './useActiveTimer.js';
 
 /**
@@ -22,7 +22,7 @@ export function useElapsedTimer({ includeTotalTime = false } = {}) {
             intervalRef.current = null;
         }
 
-        if (!activeIssue || !startTime || isNaN(new Date(startTime).getTime())) {
+        if (!activeIssue || !startTime || Number.isNaN(new Date(startTime).getTime())) {
             setElapsedTime(null);
             return;
         }

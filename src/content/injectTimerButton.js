@@ -1,10 +1,11 @@
 // content/injectTimerButton.js
-import { TimerService } from '../services/timer.service.js';
-import { TimeService } from '../utils/time.utils.js';
+
 import { StorageService } from '../services/storage.service.js';
 import { addStorageListener } from '../services/storage-listener.service.js';
+import { TimerService } from '../services/timer.service.js';
 import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../utils/constants.utils.js';
-import { isIssuePage, getIssueTitle } from './helpers.js';
+import { TimeService } from '../utils/time.utils.js';
+import { getIssueTitle, isIssuePage } from './helpers.js';
 
 // Flag to prevent duplicate injections on same page
 let isInjected = false;
@@ -39,9 +40,12 @@ export async function injectTimerButton() {
         if (!document.querySelector('#track-time-btn')) {
             return;
         }
-        const { activeIssue, startTime } = await StorageService.getMultiple([STORAGE_KEYS.ACTIVE_ISSUE, STORAGE_KEYS.START_TIME]);
-        const totalTime = await TimerService.getTotalTimeForIssue(location.pathname) || 0;
-        if (activeIssue === location.pathname && startTime && !isNaN(new Date(startTime).getTime())) {
+        const { activeIssue, startTime } = await StorageService.getMultiple([
+            STORAGE_KEYS.ACTIVE_ISSUE,
+            STORAGE_KEYS.START_TIME,
+        ]);
+        const totalTime = (await TimerService.getTotalTimeForIssue(location.pathname)) || 0;
+        if (activeIssue === location.pathname && startTime && !Number.isNaN(new Date(startTime).getTime())) {
             updateButtonText(btn, startTime, totalTime);
             if (!btn.dataset.intervalId) {
                 startButtonUpdateInterval(btn, totalTime);
@@ -61,8 +65,11 @@ export async function injectTimerButton() {
 
     // Click listener
     btn.addEventListener('click', async () => {
-        const { activeIssue, startTime } = await StorageService.getMultiple([STORAGE_KEYS.ACTIVE_ISSUE, STORAGE_KEYS.START_TIME]);
-        if (activeIssue === location.pathname && startTime && !isNaN(new Date(startTime).getTime())) {
+        const { activeIssue, startTime } = await StorageService.getMultiple([
+            STORAGE_KEYS.ACTIVE_ISSUE,
+            STORAGE_KEYS.START_TIME,
+        ]);
+        if (activeIssue === location.pathname && startTime && !Number.isNaN(new Date(startTime).getTime())) {
             await TimerService.stopTimer(location.pathname);
         } else {
             const title = getIssueTitle();
@@ -108,7 +115,7 @@ function startButtonUpdateInterval(btn, totalTime) {
             return;
         }
         const { startTime } = await StorageService.getMultiple([STORAGE_KEYS.START_TIME]);
-        if (startTime && !isNaN(new Date(startTime).getTime())) {
+        if (startTime && !Number.isNaN(new Date(startTime).getTime())) {
             updateButtonText(btn, startTime, totalTime);
         } else {
             btn.textContent = `${TimeService.formatTime(0, totalTime)} Start Timer`;

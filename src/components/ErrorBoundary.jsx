@@ -21,6 +21,7 @@ export class ErrorBoundary extends Component {
                     <div className="text-[14px] font-medium text-primary mb-1">Something went wrong</div>
                     <p className="text-[12px] text-tertiary mb-4">An unexpected error occurred in this view.</p>
                     <button
+                        type="button"
                         onClick={() => this.setState({ hasError: false })}
                         className="text-[12px] font-medium px-4 py-1.5 rounded-lg bg-accent text-white hover:bg-accent-hover cursor-pointer transition-colors"
                     >

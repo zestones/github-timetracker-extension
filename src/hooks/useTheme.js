@@ -1,12 +1,10 @@
-import { useState, useEffect, useCallback } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import { StorageService } from '../services/storage.service.js';
 import { STORAGE_KEYS } from '../utils/constants.utils.js';
 
 export function useTheme() {
     const [preference, setPreference] = useState('system');
-    const [systemDark, setSystemDark] = useState(
-        window.matchMedia('(prefers-color-scheme: dark)').matches
-    );
+    const [systemDark, setSystemDark] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     useEffect(() => {
         StorageService.get(STORAGE_KEYS.THEME).then((saved) => {

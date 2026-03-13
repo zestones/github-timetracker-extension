@@ -1,9 +1,9 @@
+import { STORAGE_KEYS } from '../utils/constants.utils.js';
 import { TimeService } from '../utils/time.utils.js';
 import { GitHubService } from './github.service.js';
-import { StorageService } from './storage.service.js';
 import { GitHubStorageService } from './github-storage.service.js';
-import { STORAGE_KEYS } from '../utils/constants.utils.js';
 import { IssueStorageService } from './issue-storage.service.js';
+import { StorageService } from './storage.service.js';
 
 export class TimerService {
     /** @param {string} issueUrl @returns {Promise<number>} Total seconds */
@@ -11,7 +11,7 @@ export class TimerService {
         /** @type {import('../utils/schema.utils.js').TrackedTimeEntry[]} */
         const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) ?? [];
         return trackedTimes
-            .filter(entry => entry.issueUrl === issueUrl)
+            .filter((entry) => entry.issueUrl === issueUrl)
             .reduce((total, entry) => total + (entry.seconds || 0), 0);
     }
 
@@ -25,7 +25,7 @@ export class TimerService {
             ]);
 
             if (activeIssueUrl && startTime && activeIssueUrl !== issueUrl) {
-                await this.stopTimer(activeIssueUrl);
+                await TimerService.stopTimer(activeIssueUrl);
             }
 
             const issueInfo = GitHubService.parseIssueUrl(issueUrl);
@@ -42,15 +42,12 @@ export class TimerService {
                 await IssueStorageService.add({ url: issueUrl, title: fullIssueTitle });
             }
 
-            const totalTime = await this.getTotalTimeForIssue(issueUrl);
+            const totalTime = await TimerService.getTotalTimeForIssue(issueUrl);
             chrome.runtime.sendMessage({ action: 'timerStarted', issueUrl });
             return { issueUrl, totalTime, isRunning: true };
         } catch (error) {
             console.error('Failed to start timer:', error);
-            await StorageService.removeMultiple([
-                STORAGE_KEYS.ACTIVE_ISSUE,
-                STORAGE_KEYS.START_TIME,
-            ]);
+            await StorageService.removeMultiple([STORAGE_KEYS.ACTIVE_ISSUE, STORAGE_KEYS.START_TIME]);
             return { issueUrl, totalTime: 0, isRunning: false };
         }
     }
@@ -65,12 +62,9 @@ export class TimerService {
                 IssueStorageService.getByUrl(issueUrl),
             ]);
 
-            if (!startTime || isNaN(new Date(startTime).getTime())) {
+            if (!startTime || Number.isNaN(new Date(startTime).getTime())) {
                 console.error('Invalid startTime:', startTime);
-                await StorageService.removeMultiple([
-                    STORAGE_KEYS.ACTIVE_ISSUE,
-                    STORAGE_KEYS.START_TIME,
-                ]);
+                await StorageService.removeMultiple([STORAGE_KEYS.ACTIVE_ISSUE, STORAGE_KEYS.START_TIME]);
                 return { issueUrl, totalTime: 0, isRunning: false };
             }
 
@@ -80,26 +74,26 @@ export class TimerService {
             const issueInfo = GitHubService.parseIssueUrl(issueUrl);
             const { owner, repo, issueNumber } = issueInfo;
 
-            const updatedTrackedTimes = [...(trackedTimes ?? []), {
-                issueUrl,
-                title: taskTitle,
-                seconds: timeSpentSeconds,
-                date: TimeService.getLocalDateString(),
-            }];
+            const updatedTrackedTimes = [
+                ...(trackedTimes ?? []),
+                {
+                    issueUrl,
+                    title: taskTitle,
+                    seconds: timeSpentSeconds,
+                    date: TimeService.getLocalDateString(),
+                },
+            ];
 
             await Promise.all([
                 StorageService.set(STORAGE_KEYS.TRACKED_TIMES, updatedTrackedTimes),
-                StorageService.removeMultiple([
-                    STORAGE_KEYS.ACTIVE_ISSUE,
-                    STORAGE_KEYS.START_TIME,
-                ]),
+                StorageService.removeMultiple([STORAGE_KEYS.ACTIVE_ISSUE, STORAGE_KEYS.START_TIME]),
             ]);
 
-            const totalTime = await this.getTotalTimeForIssue(issueUrl);
+            const totalTime = await TimerService.getTotalTimeForIssue(issueUrl);
 
             // Sync to GitHub in the background (non-blocking)
             if (githubToken) {
-                this.syncCommentInBackground(issueUrl, owner, repo, issueNumber, updatedTrackedTimes);
+                TimerService.syncCommentInBackground(issueUrl, owner, repo, issueNumber, updatedTrackedTimes);
             }
 
             chrome.runtime.sendMessage({ action: 'timerStopped', issueUrl });
@@ -114,14 +108,16 @@ export class TimerService {
         (async () => {
             try {
                 const issueEntries = trackedTimes
-                    .filter(e => e.issueUrl === issueUrl)
-                    .map(e => ({ date: e.date, seconds: e.seconds }));
+                    .filter((e) => e.issueUrl === issueUrl)
+                    .map((e) => ({ date: e.date, seconds: e.seconds }));
 
                 const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) ?? {};
                 const username = await GitHubService.getCurrentUsername();
                 const commentKey = `${username}:${issueUrl}`;
                 const result = await GitHubService.createOrUpdateTrackerComment({
-                    owner, repo, issueNumber,
+                    owner,
+                    repo,
+                    issueNumber,
                     entries: issueEntries,
                     cachedCommentId: commentIds[commentKey],
                 });

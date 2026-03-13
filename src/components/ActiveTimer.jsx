@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'preact/hooks';
-import { IssueStorageService } from '../services/issue-storage.service.js';
-import { GitHubService } from '../services/github.service.js';
-import { AggregationService } from '../utils/aggregation.utils.js';
+import { useEffect, useState } from 'preact/hooks';
 import { useElapsedTimer } from '../hooks/useElapsedTimer.js';
 import { IconStop } from '../icons.jsx';
+import { GitHubService } from '../services/github.service.js';
+import { IssueStorageService } from '../services/issue-storage.service.js';
+import { AggregationService } from '../utils/aggregation.utils.js';
 
 export function ActiveTimer() {
     const { activeIssue, startTime, elapsedTime, stop } = useElapsedTimer({ includeTotalTime: true });
@@ -23,7 +23,7 @@ export function ActiveTimer() {
                     ...parsed,
                     title: AggregationService.extractCleanTitle(issue?.title),
                 });
-            } catch (e) {
+            } catch (_e) {
                 setIssueInfo({ fullRepo: 'unknown', issueNumber: 0, title: issue?.title || 'Untitled' });
             }
         };
@@ -49,8 +49,11 @@ export function ActiveTimer() {
                 </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-                <span className="text-sm font-mono font-semibold text-success-text tabular-nums">{elapsedTime || '00:00:00'}</span>
+                <span className="text-sm font-mono font-semibold text-success-text tabular-nums">
+                    {elapsedTime || '00:00:00'}
+                </span>
                 <button
+                    type="button"
                     onClick={handleStop}
                     className="flex items-center gap-1 bg-danger-muted hover:bg-danger-hover text-white text-[11px] font-medium pl-1.5 pr-2 py-1 rounded-md cursor-pointer transition-colors"
                 >

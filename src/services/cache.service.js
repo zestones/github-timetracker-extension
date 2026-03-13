@@ -1,5 +1,5 @@
-import { StorageService } from './storage.service.js';
 import { CACHE_PREFIX, CACHE_TTL, USER_CACHE_TTL } from '../utils/constants.utils.js';
+import { StorageService } from './storage.service.js';
 
 export class CacheService {
     static async get(key) {
@@ -23,21 +23,21 @@ export class CacheService {
 
     /** @returns {Promise<import('../utils/schema.utils.js').CachedUser|null>} */
     static async getCachedUser() {
-        return this.get('user');
+        return CacheService.get('user');
     }
 
     /** @param {import('../utils/schema.utils.js').CachedUser} user */
     static async setCachedUser(user) {
-        await this.set('user', user, USER_CACHE_TTL);
+        await CacheService.set('user', user, USER_CACHE_TTL);
     }
 
     /** @param {string} fullName @returns {Promise<import('../utils/schema.utils.js').SimplifiedIssue[]|null>} */
     static async getCachedIssues(fullName) {
-        return this.get(`issues:${fullName}`);
+        return CacheService.get(`issues:${fullName}`);
     }
 
     /** @param {string} fullName @param {import('../utils/schema.utils.js').SimplifiedIssue[]} issues */
     static async setCachedIssues(fullName, issues) {
-        await this.set(`issues:${fullName}`, issues);
+        await CacheService.set(`issues:${fullName}`, issues);
     }
 }

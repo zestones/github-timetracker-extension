@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { StorageService } from '../services/storage.service.js';
 
 export function useStorageListener(key, initialValue = null) {

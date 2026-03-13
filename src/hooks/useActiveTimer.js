@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { StorageService } from '../services/storage.service.js';
 import { TimerService } from '../services/timer.service.js';
 import { STORAGE_KEYS } from '../utils/constants.utils.js';
@@ -32,7 +32,7 @@ export function useActiveTimer() {
     }, []);
 
     const isActive = (issueUrl) =>
-        issueUrl === activeIssue && startTime && !isNaN(new Date(startTime).getTime());
+        issueUrl === activeIssue && startTime && !Number.isNaN(new Date(startTime).getTime());
 
     const stop = async (issueUrl) => {
         const url = issueUrl ?? activeIssue;
