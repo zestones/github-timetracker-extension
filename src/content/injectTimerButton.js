@@ -6,31 +6,26 @@ import { addStorageListener } from '../utils/storage-listener.js';
 import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../utils/constants.js';
 import { isIssuePage, getIssueTitle } from './helpers.js';
 
-console.log('injectTimerButton module loaded, timestamp:', Date.now());
-
-// Флаг для предотвращения повторных инъекций на одной странице
+// Flag to prevent duplicate injections on same page
 let isInjected = false;
 
-// Функция для сброса флага isInjected
+// Reset injection flag on navigation
 export function resetInjectedFlag() {
-    console.log('resetInjectedFlag: resetting isInjected');
     isInjected = false;
 }
 
 export async function injectTimerButton() {
     if (!isIssuePage()) {
-        console.log('injectTimerButton: skipped (not an issue page)');
         return;
     }
 
     const container = document.querySelector('[data-testid="issue-metadata-fixed"]');
     const buttonExists = document.querySelector('#track-time-btn');
     if (!container || buttonExists || isInjected) {
-        console.log(`injectTimerButton: skipped (container: ${!!container}, buttonExists: ${!!buttonExists}, isInjected: ${isInjected})`);
         return;
     }
 
-    // Удаляем существующие кнопки
+    // Remove any existing buttons
     const existingButtons = document.querySelectorAll('#track-time-btn');
     existingButtons.forEach((btn) => {
         if (btn.dataset.intervalId) {
@@ -38,7 +33,6 @@ export async function injectTimerButton() {
         }
         btn.remove();
     });
-    console.log(`injectTimerButton: removed ${existingButtons.length} existing buttons`);
 
     const btn = createTimerButton();
     isInjected = true;
@@ -65,7 +59,6 @@ export async function injectTimerButton() {
 
     // Добавляем кнопку в DOM перед обновлением
     container.append(btn);
-    console.log('injectTimerButton: button appended');
 
     // Инициализация кнопки
     await updateButton();

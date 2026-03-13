@@ -33,7 +33,6 @@ export class TimerService {
             ]);
 
             if (activeIssueUrl && startTime && activeIssueUrl !== issueUrl) {
-                console.log(`Останавливаем таймер для предыдущей задачи: ${activeIssueUrl}`);
                 await this.stopTimer(activeIssueUrl, buttonElement);
             }
 

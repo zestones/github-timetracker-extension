@@ -139,9 +139,9 @@ export class GitHubService {
                     );
                     return { comment: result, commentId: result.id };
                 }
-                console.log('Cached comment belongs to different user, searching for own comment');
+                // Cached comment belongs to different user, search for own comment
             } catch (e) {
-                console.log('Cached comment ID failed, searching:', e.message);
+                // Cached comment ID failed, fall through to search
             }
         }
 

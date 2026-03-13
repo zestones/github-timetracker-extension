@@ -55,7 +55,6 @@ async function handleTimerStop(reason) {
     if (activeIssue && startTime) {
         const timeSpent = (Date.now() - new Date(startTime).getTime()) / 1000;
         const issue = await IssueStorageService.getByUrl(activeIssue);
-        console.log(`Stopped due to ${reason}. Tracked ${timeSpent} seconds on ${activeIssue}`);
 
         let issueInfo;
         try {
@@ -115,19 +114,14 @@ chrome.runtime.onSuspend.addListener(async () => {
     await handleTimerStop('browser closing');
 });
 
-// Пересылка сообщений timerStarted/timerStopped ко всем вкладкам GitHub
+// Forward timerStarted/timerStopped messages to all GitHub tabs
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('Background received message:', message);
     if (message.action === 'timerStarted' || message.action === 'timerStopped') {
-        // Рассылаем сообщение всем вкладкам GitHub
         chrome.tabs.query({ url: '*://github.com/*' }, (tabs) => {
             tabs.forEach((tab) => {
-                chrome.tabs.sendMessage(tab.id, message, (response) => {
-                    if (chrome.runtime.lastError) {
-                        console.log(`Failed to send message to tab ${tab.id}:`, chrome.runtime.lastError.message);
-                    } else {
-                        console.log(`Message sent to tab ${tab.id}, response:`, response);
-                    }
+                chrome.tabs.sendMessage(tab.id, message, () => {
+                    // Ignore errors for tabs that can't receive messages
+                    void chrome.runtime.lastError;
                 });
             });
         });
