@@ -5,6 +5,7 @@ import { StatsTab } from './views/StatsTab.jsx';
 import { CalendarView } from './views/CalendarView.jsx';
 import { Settings } from '../components/Settings.jsx';
 import { Modal } from '../components/Modal.jsx';
+import { ErrorBoundary } from '../components/ErrorBoundary.jsx';
 import { GitHubStorageService } from '../utils/github-storage.js';
 import { StorageService } from '../utils/storage.js';
 import { IssueStorageService } from '../utils/issue-storage.js';
@@ -164,20 +165,22 @@ export function App() {
 
             {/* Page Content */}
             <main className="flex-1 overflow-y-auto popup-scroll">
-                {page === 'issues' && <IssuesTab />}
-                {page === 'stats' && <StatsTab tracked={tracked} user={user} />}
-                {page === 'calendar' && <CalendarView tracked={tracked} />}
-                {page === 'settings' && (
-                    <Settings
-                        token={token}
-                        maskedToken={maskedToken}
-                        user={user}
-                        onTokenChange={handleTokenChange}
-                        onClearData={() => setShowClearConfirm(true)}
-                        theme={theme}
-                        onThemeChange={setTheme}
-                    />
-                )}
+                <ErrorBoundary>
+                    {page === 'issues' && <IssuesTab />}
+                    {page === 'stats' && <StatsTab tracked={tracked} user={user} />}
+                    {page === 'calendar' && <CalendarView tracked={tracked} />}
+                    {page === 'settings' && (
+                        <Settings
+                            token={token}
+                            maskedToken={maskedToken}
+                            user={user}
+                            onTokenChange={handleTokenChange}
+                            onClearData={() => setShowClearConfirm(true)}
+                            theme={theme}
+                            onThemeChange={setTheme}
+                        />
+                    )}
+                </ErrorBoundary>
             </main>
 
             {/* Bottom Navigation */}
