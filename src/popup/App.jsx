@@ -153,7 +153,7 @@ export function App() {
             {/* Page Content */}
             <main className="flex-1 overflow-y-auto popup-scroll">
                 {page === 'issues' && <IssuesTab />}
-                {page === 'stats' && <StatsTab tracked={tracked} />}
+                {page === 'stats' && <StatsTab tracked={tracked} user={user} />}
                 {page === 'calendar' && <CalendarView tracked={tracked} />}
                 {page === 'settings' && (
                     <Settings

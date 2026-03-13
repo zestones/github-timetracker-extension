@@ -2,12 +2,16 @@ import { TimeService } from '../../utils/time.js';
 import { IconPlay, IconStop, IconExternalLink } from '../../icons.jsx';
 
 export function IssueRow({ issue, isActive, onStart, onStop, trackedSeconds = 0 }) {
+    const isClosed = issue.state === 'closed';
     return (
-        <div className="flex items-center gap-2 py-2 px-2 hover:bg-surface rounded-lg group transition-colors">
+        <div className={`flex items-center gap-2 py-2 px-2 hover:bg-surface rounded-lg group transition-colors ${isClosed ? 'opacity-70' : ''}`}>
             <div className="flex-1 min-w-0">
                 <div className="text-[13px] text-primary truncate">
                     <span className="text-muted font-mono text-[11px]">#{issue.number}</span>
-                    <span className="ml-1.5">{issue.title}</span>
+                    {isClosed && (
+                        <span className="ml-1 text-[10px] text-muted bg-raised px-1.5 py-0.5 rounded-full">closed</span>
+                    )}
+                    <span className={`ml-1.5 ${isClosed ? 'line-through text-secondary' : ''}`}>{issue.title}</span>
                 </div>
                 <div className="flex items-center gap-2 text-[11px] text-muted mt-0.5">
                     {trackedSeconds > 0 && (

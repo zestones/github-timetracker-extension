@@ -81,8 +81,8 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
                 const localTotal = localEntries.reduce((sum, e) => sum + (e.seconds || 0), 0);
                 const remoteTotal = item.entries.reduce((sum, e) => sum + (e.seconds || 0), 0);
 
-                // Only import if remote has more time (avoid duplicates)
-                if (remoteTotal > localTotal) {
+                // Import if no local data or remote has more time
+                if (localEntries.length === 0 || remoteTotal > localTotal) {
                     // Remove existing local entries for this issue
                     const filtered = trackedTimes.filter(t => t.issueUrl !== item.issueUrl);
                     trackedTimes.length = 0;
@@ -295,7 +295,7 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
                                 />
                             </button>
                         </div>
-                        <div className="text-[10px] text-faint mt-2 leading-snug">
+                        <div className="text-[10px] text-accent/65 mt-2 leading-snug">
                             Useful when switching browsers/devices or after clearing extension data. Also helps if multiple team members use this extension — each user keeps their own tracked time.
                         </div>
                     </div>

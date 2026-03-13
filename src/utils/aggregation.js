@@ -21,6 +21,39 @@ export class AggregationService {
             .sort((a, b) => b.seconds - a.seconds);
     }
 
+    static parseEntryTitle(title) {
+        const parts = title.split(' | ');
+        if (parts.length >= 3) {
+            return { issueTitle: parts.slice(1, -1).join(' | '), issueNumber: parts[parts.length - 1] };
+        }
+        return { issueTitle: title, issueNumber: '' };
+    }
+
+    static getRepoBreakdownDetailed(entries) {
+        const repoMap = {};
+        for (const entry of entries) {
+            const repo = this.parseRepo(entry.issueUrl);
+            if (!repoMap[repo]) repoMap[repo] = {};
+            const issueKey = entry.issueUrl;
+            if (!repoMap[repo][issueKey]) {
+                const { issueTitle, issueNumber } = this.parseEntryTitle(entry.title || '');
+                repoMap[repo][issueKey] = {
+                    title: issueTitle || issueNumber || issueKey,
+                    issueNumber,
+                    sessions: [],
+                    totalSeconds: 0,
+                };
+            }
+            repoMap[repo][issueKey].totalSeconds += entry.seconds;
+            repoMap[repo][issueKey].sessions.push({
+                date: entry.date,
+                seconds: entry.seconds,
+                user: entry.user,
+            });
+        }
+        return repoMap;
+    }
+
     static getLocalDateString(date = new Date()) {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');

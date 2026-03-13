@@ -212,6 +212,49 @@ export class GitHubService {
         return allRecovered;
     }
 
+    static async recoverAllUsersTimesFromRepo(owner, repo) {
+        const results = [];
+        let page = 1;
+        while (page <= 50) {
+            const comments = await this.apiRequest(
+                `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues/comments?per_page=100&page=${page}&sort=updated&direction=desc`
+            );
+            for (const comment of comments) {
+                if (comment.body && matchesTrackerMarker(comment.body)) {
+                    const entries = this.parseTrackerPayload(comment.body);
+                    if (entries) {
+                        const issueMatch = comment.issue_url.match(/\/issues\/(\d+)$/);
+                        if (issueMatch) {
+                            results.push({
+                                issueUrl: `/${owner}/${repo}/issues/${issueMatch[1]}`,
+                                user: comment.user.login,
+                                entries,
+                                commentId: comment.id,
+                            });
+                        }
+                    }
+                }
+            }
+            if (comments.length < 100) break;
+            page++;
+        }
+        return results;
+    }
+
+    static async fetchAllUsersData(pinnedRepos) {
+        const allData = [];
+        for (const repo of pinnedRepos) {
+            const [owner, repoName] = repo.fullName.split('/');
+            try {
+                const repoResults = await this.recoverAllUsersTimesFromRepo(owner, repoName);
+                allData.push(...repoResults);
+            } catch (e) {
+                console.error(`Fetch all users failed for ${repo.fullName}:`, e);
+            }
+        }
+        return allData;
+    }
+
     static async searchRepositories(query) {
         const results = await this.apiRequest(
             `/search/repositories?q=${encodeURIComponent(query)}&per_page=20&sort=updated`
@@ -219,24 +262,24 @@ export class GitHubService {
         return results.items || [];
     }
 
-    static async getRepoIssues(owner, repo) {
+    static async getRepoIssues(owner, repo, { state = 'all' } = {}) {
         const issues = await this.apiRequest(
-            `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues?state=open&per_page=100&sort=updated`
+            `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues?state=${state}&per_page=100&sort=updated`
         );
         // Filter out pull requests (GitHub API returns PRs in /issues endpoint)
         return issues.filter((issue) => !issue.pull_request);
     }
 
-    static async getAssignedIssues() {
+    static async getAssignedIssues({ state = 'all' } = {}) {
         const issues = await this.apiRequest(
-            '/issues?filter=assigned&state=open&per_page=100&sort=updated'
+            `/issues?filter=assigned&state=${state}&per_page=100&sort=updated`
         );
         return issues.filter((issue) => !issue.pull_request);
     }
 
-    static async getCreatedIssues() {
+    static async getCreatedIssues({ state = 'all' } = {}) {
         const issues = await this.apiRequest(
-            '/issues?filter=created&state=open&per_page=100&sort=updated'
+            `/issues?filter=created&state=${state}&per_page=100&sort=updated`
         );
         return issues.filter((issue) => !issue.pull_request);
     }

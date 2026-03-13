@@ -1,38 +1,107 @@
-import { useMemo, useState } from 'preact/hooks';
+import { useMemo, useState, useCallback } from 'preact/hooks';
 import { TimeService } from '../../../utils/time.js';
 import { AggregationService } from '../../../utils/aggregation.js';
-import { IconCalendar, IconX } from '../../../icons.jsx';
+import { GitHubService } from '../../../utils/github.js';
+import { CacheService } from '../../../utils/cache.js';
+import { IssueStorageService } from '../../../utils/issue-storage.js';
+import { IconCalendar, IconX, IconChevronDown, IconChevronRight, IconUser, IconUsers, IconRefresh } from '../../../icons.jsx';
 
-export function StatsTab({ tracked }) {
+export function StatsTab({ tracked, user }) {
     const [rangeMode, setRangeMode] = useState('today');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
+    const [expandedRepos, setExpandedRepos] = useState({});
+    const [userMode, setUserMode] = useState('me');
+    const [everyoneData, setEveryoneData] = useState(null);
+    const [everyoneLoading, setEveryoneLoading] = useState(false);
 
-    const filteredEntries = useMemo(() => {
-        if (rangeMode === 'today') return AggregationService.getTodayEntries(tracked);
-        if (rangeMode === 'week') return AggregationService.getWeekEntries(tracked);
-        if (rangeMode === 'month') return AggregationService.getMonthEntries(tracked);
-        if (rangeMode === 'custom' && customStart && customEnd) {
-            return AggregationService.filterByDateRange(tracked, customStart, customEnd);
+    const fetchEveryoneData = useCallback(async () => {
+        setEveryoneLoading(true);
+        try {
+            const pinnedRepos = await CacheService.getPinnedRepos();
+            if (pinnedRepos.length === 0) {
+                setEveryoneData([]);
+                return;
+            }
+            const allUsersData = await GitHubService.fetchAllUsersData(pinnedRepos);
+            const issues = await IssueStorageService.getAll();
+            const titleMap = {};
+            for (const issue of issues) {
+                titleMap[issue.url] = issue.title;
+            }
+            for (const entry of tracked) {
+                if (!titleMap[entry.issueUrl]) titleMap[entry.issueUrl] = entry.title;
+            }
+            const flatEntries = allUsersData.flatMap(item =>
+                item.entries.map(e => ({
+                    issueUrl: item.issueUrl,
+                    title: titleMap[item.issueUrl] || `#${item.issueUrl.split('/').pop()}`,
+                    seconds: e.seconds,
+                    date: e.date,
+                    user: item.user,
+                }))
+            );
+            setEveryoneData(flatEntries);
+        } catch (e) {
+            console.error('Failed to fetch everyone data:', e);
+            setEveryoneData([]);
+        } finally {
+            setEveryoneLoading(false);
+        }
+    }, [tracked]);
+
+    const handleUserModeChange = useCallback((mode) => {
+        setUserMode(mode);
+        if (mode === 'everyone' && everyoneData === null) {
+            fetchEveryoneData();
+        }
+    }, [everyoneData, fetchEveryoneData]);
+
+    const activeEntries = useMemo(() => {
+        if (userMode === 'everyone') return everyoneData || [];
+        // When we have fetched GitHub data, merge current user's remote entries
+        // with local data so "Me" includes issues not in local cache
+        if (everyoneData && user?.login) {
+            const remoteMe = everyoneData.filter(e => e.user === user.login);
+            // Build a set of issueUrl+date combos from local tracked
+            const localKeys = new Set(tracked.map(e => `${e.issueUrl}|${e.date}`));
+            // Add remote entries whose issue+date combo is not in local data
+            const missing = remoteMe.filter(e => !localKeys.has(`${e.issueUrl}|${e.date}`));
+            if (missing.length > 0) return [...tracked, ...missing];
         }
         return tracked;
-    }, [tracked, rangeMode, customStart, customEnd]);
+    }, [userMode, everyoneData, tracked, user]);
+
+    const filteredEntries = useMemo(() => {
+        if (rangeMode === 'today') return AggregationService.getTodayEntries(activeEntries);
+        if (rangeMode === 'week') return AggregationService.getWeekEntries(activeEntries);
+        if (rangeMode === 'month') return AggregationService.getMonthEntries(activeEntries);
+        if (rangeMode === 'custom' && customStart && customEnd) {
+            return AggregationService.filterByDateRange(activeEntries, customStart, customEnd);
+        }
+        return activeEntries;
+    }, [activeEntries, rangeMode, customStart, customEnd]);
 
     const todaySeconds = useMemo(
-        () => AggregationService.getTotalSeconds(AggregationService.getTodayEntries(tracked)),
-        [tracked]
+        () => AggregationService.getTotalSeconds(AggregationService.getTodayEntries(activeEntries)),
+        [activeEntries]
     );
     const weekSeconds = useMemo(
-        () => AggregationService.getTotalSeconds(AggregationService.getWeekEntries(tracked)),
-        [tracked]
+        () => AggregationService.getTotalSeconds(AggregationService.getWeekEntries(activeEntries)),
+        [activeEntries]
     );
     const monthSeconds = useMemo(
-        () => AggregationService.getTotalSeconds(AggregationService.getMonthEntries(tracked)),
-        [tracked]
+        () => AggregationService.getTotalSeconds(AggregationService.getMonthEntries(activeEntries)),
+        [activeEntries]
     );
 
     const repoBreakdown = useMemo(
         () => AggregationService.getTimePerRepo(filteredEntries),
+        [filteredEntries]
+    );
+
+    const repoDetails = useMemo(
+        () => AggregationService.getRepoBreakdownDetailed(filteredEntries),
         [filteredEntries]
     );
 
@@ -46,6 +115,10 @@ export function StatsTab({ tracked }) {
         [filteredEntries]
     );
 
+    const toggleRepo = (repo) => {
+        setExpandedRepos(prev => ({ ...prev, [repo]: !prev[repo] }));
+    };
+
     const colors = [
         { bg: 'bg-accent', light: 'bg-accent-subtle', ring: 'ring-accent-ring', text: 'text-accent-text', value: 'text-accent' },
         { bg: 'bg-violet-text', light: 'bg-violet-subtle', ring: 'ring-violet-ring', text: 'text-violet-text', value: 'text-violet-value' },
@@ -57,6 +130,8 @@ export function StatsTab({ tracked }) {
         { id: 'week', label: 'This Week', seconds: weekSeconds },
         { id: 'month', label: 'This Month', seconds: monthSeconds },
     ];
+
+    const barColors = ['bg-indigo-500', 'bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-cyan-500'];
 
     return (
         <div className="p-4">
@@ -81,8 +156,43 @@ export function StatsTab({ tracked }) {
                 ))}
             </div>
 
-            {/* Custom date range */}
-            <div className="mb-4">
+            {/* Filters row */}
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+                {/* User filter */}
+                <div className="flex items-center rounded-lg border border-border-default overflow-hidden">
+                    <button
+                        onClick={() => handleUserModeChange('me')}
+                        className={`flex items-center gap-1 text-[11px] cursor-pointer font-medium px-2.5 py-1.5 transition-all ${userMode === 'me'
+                            ? 'bg-accent-subtle text-accent'
+                            : 'bg-surface text-tertiary hover:bg-raised hover:text-secondary'
+                            }`}
+                    >
+                        <IconUser size={11} /> Me
+                    </button>
+                    <div className="w-px h-4 bg-border-default" />
+                    <button
+                        onClick={() => handleUserModeChange('everyone')}
+                        className={`flex items-center gap-1 text-[11px] cursor-pointer font-medium px-2.5 py-1.5 transition-all ${userMode === 'everyone'
+                            ? 'bg-accent-subtle text-accent'
+                            : 'bg-surface text-tertiary hover:bg-raised hover:text-secondary'
+                            }`}
+                    >
+                        <IconUsers size={11} /> Everyone
+                    </button>
+                </div>
+
+                {userMode === 'everyone' && (
+                    <button
+                        onClick={fetchEveryoneData}
+                        disabled={everyoneLoading}
+                        className="flex items-center gap-1 text-[11px] cursor-pointer font-medium px-2 py-1.5 rounded-lg border border-border-default bg-surface text-tertiary hover:bg-raised hover:text-secondary transition-all disabled:opacity-50"
+                        title="Refresh everyone's data from GitHub"
+                    >
+                        <IconRefresh size={11} className={everyoneLoading ? 'animate-spin' : ''} />
+                    </button>
+                )}
+
+                {/* Custom date range */}
                 <button
                     onClick={() => setRangeMode(rangeMode === 'custom' ? 'today' : 'custom')}
                     className={`flex items-center gap-1.5 text-[11px] cursor-pointer transition-all font-medium px-3 py-1.5 rounded-lg border ${rangeMode === 'custom'
@@ -96,24 +206,32 @@ export function StatsTab({ tracked }) {
                         <><IconCalendar size={12} /> Custom range</>
                     )}
                 </button>
-                {rangeMode === 'custom' && (
-                    <div className="flex items-center gap-2 mt-2">
-                        <input
-                            type="date"
-                            value={customStart}
-                            onInput={(e) => setCustomStart(e.target.value)}
-                            className="text-[12px] border border-border-default rounded-lg px-2.5 py-1.5 flex-1 bg-surface focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary"
-                        />
-                        <span className="text-faint text-[11px]">to</span>
-                        <input
-                            type="date"
-                            value={customEnd}
-                            onInput={(e) => setCustomEnd(e.target.value)}
-                            className="text-[12px] border border-border-default rounded-lg px-2.5 py-1.5 flex-1 bg-surface focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary"
-                        />
-                    </div>
-                )}
             </div>
+
+            {rangeMode === 'custom' && (
+                <div className="flex items-center gap-2 mb-4">
+                    <input
+                        type="date"
+                        value={customStart}
+                        onInput={(e) => setCustomStart(e.target.value)}
+                        className="text-[12px] border border-border-default rounded-lg px-2.5 py-1.5 flex-1 bg-surface focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary"
+                    />
+                    <span className="text-faint text-[11px]">to</span>
+                    <input
+                        type="date"
+                        value={customEnd}
+                        onInput={(e) => setCustomEnd(e.target.value)}
+                        className="text-[12px] border border-border-default rounded-lg px-2.5 py-1.5 flex-1 bg-surface focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary"
+                    />
+                </div>
+            )}
+
+            {/* Loading state for everyone */}
+            {userMode === 'everyone' && everyoneLoading && (
+                <div className="text-[12px] text-muted text-center py-6">
+                    Fetching data from GitHub...
+                </div>
+            )}
 
             {/* Per-repo breakdown */}
             <div>
@@ -127,11 +245,24 @@ export function StatsTab({ tracked }) {
                 ) : (
                     repoBreakdown.map(({ repo, seconds, formatted }, i) => {
                         const percentage = totalFiltered > 0 ? Math.round((seconds / totalFiltered) * 100) : 0;
-                        const barColors = ['bg-indigo-500', 'bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-cyan-500'];
+                        const isExpanded = expandedRepos[repo];
+                        const details = repoDetails[repo] || {};
+                        const issues = Object.entries(details).sort((a, b) => b[1].totalSeconds - a[1].totalSeconds);
+
                         return (
                             <div key={repo} className="mb-3">
-                                <div className="flex justify-between mb-1">
-                                    <span className="text-[13px] text-secondary truncate flex-1 font-medium">{repo}</span>
+                                <div
+                                    className="flex items-center justify-between mb-1 cursor-pointer group"
+                                    onClick={() => toggleRepo(repo)}
+                                >
+                                    <div className="flex items-center gap-1 flex-1 min-w-0">
+                                        <span className="text-muted shrink-0 transition-transform">
+                                            {isExpanded ? <IconChevronDown size={12} /> : <IconChevronRight size={12} />}
+                                        </span>
+                                        <span className="text-[13px] text-secondary truncate font-medium group-hover:text-primary transition-colors">
+                                            {repo}
+                                        </span>
+                                    </div>
                                     <span className="text-[11px] text-muted shrink-0 ml-2 font-mono tabular-nums">
                                         {formatted} ({percentage}%)
                                     </span>
@@ -142,6 +273,47 @@ export function StatsTab({ tracked }) {
                                         style={{ width: `${(seconds / maxSeconds) * 100}%` }}
                                     />
                                 </div>
+
+                                {/* Expanded issue/session details */}
+                                {isExpanded && (
+                                    <div className="mt-2 ml-4 border-l-2 border-border-subtle pl-3 space-y-2">
+                                        {issues.map(([issueUrl, issueData]) => (
+                                            <div key={issueUrl}>
+                                                <div className="flex justify-between items-baseline">
+                                                    <span className="text-[12px] text-secondary font-medium truncate flex-1">
+                                                        {issueData.issueNumber && (
+                                                            <span className="text-muted mr-1">{issueData.issueNumber}</span>
+                                                        )}
+                                                        {issueData.title}
+                                                    </span>
+                                                    <span className="text-[11px] text-muted shrink-0 ml-2 font-mono tabular-nums">
+                                                        {TimeService.formatTime(issueData.totalSeconds)}
+                                                    </span>
+                                                </div>
+                                                <div className="mt-1 space-y-0.5">
+                                                    {issueData.sessions
+                                                        .sort((a, b) => b.date.localeCompare(a.date))
+                                                        .map((session, si) => (
+                                                            <div key={si} className="flex items-center justify-between text-[11px]">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-faint">{session.date}</span>
+                                                                    {session.user && userMode === 'everyone' && (
+                                                                        <span className="text-[10px] text-muted bg-raised px-1.5 py-0.5 rounded-full">
+                                                                            {session.user}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <span className="text-muted font-mono tabular-nums">
+                                                                    {TimeService.formatTime(session.seconds)}
+                                                                </span>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         );
                     })
