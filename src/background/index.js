@@ -1,9 +1,7 @@
 // background/index.js
-import { StorageService } from '../utils/storage.js';
 import { GitHubService } from '../utils/github.js';
 import { GitHubStorageService } from '../utils/github-storage.js';
-import { STORAGE_KEYS, CACHE_REFRESH_INTERVAL } from '../utils/constants.js';
-import { IssueStorageService } from "../utils/issue-storage.js";
+import { CACHE_REFRESH_INTERVAL } from '../utils/constants.js';
 import { CacheService } from '../utils/cache.js';
 import { PinnedReposService } from '../utils/pinned-repos.js';
 
@@ -45,74 +43,12 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     }
 });
 
-async function handleTimerStop(reason) {
-    const { activeIssue, startTime, trackedTimes } = await StorageService.getMultiple([
-        STORAGE_KEYS.ACTIVE_ISSUE,
-        STORAGE_KEYS.START_TIME,
-        STORAGE_KEYS.TRACKED_TIMES,
-    ]);
-
-    if (activeIssue && startTime) {
-        const timeSpent = (Date.now() - new Date(startTime).getTime()) / 1000;
-        const issue = await IssueStorageService.getByUrl(activeIssue);
-
-        let issueInfo;
-        try {
-            issueInfo = GitHubService.parseIssueUrl(activeIssue);
-        } catch (error) {
-            console.error('Failed to parse issue URL:', error);
-            return;
-        }
-
-        const { owner, repo, issueNumber } = issueInfo;
-        const taskTitle = issue?.title || 'Untitled';
-
-        const tracked = trackedTimes || [];
-        tracked.push({
-            issueUrl: activeIssue,
-            title: taskTitle,
-            seconds: timeSpent,
-            date: new Date().toISOString().slice(0, 10),
-        });
-        await StorageService.set(STORAGE_KEYS.TRACKED_TIMES, tracked);
-
-        const token = await GitHubStorageService.getGitHubToken();
-        if (token) {
-            try {
-                const issueEntries = tracked
-                    .filter(e => e.issueUrl === activeIssue)
-                    .map(e => ({ date: e.date, seconds: e.seconds }));
-
-                const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) || {};
-                const username = await GitHubService.getCurrentUsername();
-                const commentKey = `${username}:${activeIssue}`;
-                const result = await GitHubService.createOrUpdateTrackerComment({
-                    owner, repo, issueNumber,
-                    entries: issueEntries,
-                    cachedCommentId: commentIds[commentKey],
-                });
-
-                commentIds[commentKey] = result.commentId;
-                await StorageService.set(STORAGE_KEYS.COMMENT_IDS, commentIds);
-            } catch (error) {
-                console.error('Failed to sync tracker comment:', error);
-            }
-        }
-
-        await StorageService.removeMultiple([
-            STORAGE_KEYS.ACTIVE_ISSUE,
-            STORAGE_KEYS.START_TIME,
-        ]);
-    }
-}
-
-chrome.runtime.onStartup.addListener(async () => {
-    await handleTimerStop('browser restart');
-});
-
-chrome.runtime.onSuspend.addListener(async () => {
-    await handleTimerStop('browser closing');
-});
+// NOTE: No onSuspend handler — MV3 service workers are killed immediately after
+// onSuspend fires, so async work (storage writes, API calls) gets aborted mid-flight.
+// Timer state (activeIssue + startTime) is already persisted in chrome.storage.local
+// when the timer starts, so it survives SW restarts and browser restarts.
+// The user stops the timer explicitly via the popup or content script, which calls
+// TimerService.stopTimer() — the single source of truth for stop logic.
 
 // Forward timerStarted/timerStopped messages to all GitHub tabs
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
