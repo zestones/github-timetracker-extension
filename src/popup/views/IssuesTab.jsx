@@ -96,10 +96,11 @@ export function IssuesTab() {
                         type="button"
                         key={f.id}
                         onClick={() => setFilter(f.id)}
-                        className={`text-[11px] px-2.5 py-1 rounded-full cursor-pointer transition-colors font-medium ${filter === f.id
-                            ? 'bg-accent-subtle text-accent-text'
-                            : 'bg-surface text-tertiary hover:bg-raised'
-                            }`}
+                        className={`text-[11px] px-2.5 py-1 rounded-full cursor-pointer transition-colors font-medium ${
+                            filter === f.id
+                                ? 'bg-accent-subtle text-accent-text'
+                                : 'bg-surface text-tertiary hover:bg-raised'
+                        }`}
                     >
                         {f.label}
                     </button>
@@ -233,8 +234,8 @@ export function IssuesTab() {
                                             {filter === 'closed'
                                                 ? 'No closed issues'
                                                 : filter === 'open'
-                                                    ? 'No open issues'
-                                                    : 'No matching issues'}
+                                                  ? 'No open issues'
+                                                  : 'No matching issues'}
                                         </div>
                                     ) : (
                                         (repoIssues[repo.fullName] || [])
