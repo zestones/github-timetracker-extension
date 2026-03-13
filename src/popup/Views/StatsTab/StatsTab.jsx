@@ -4,13 +4,14 @@ import { AggregationService } from '../../../utils/aggregation.js';
 import { GitHubService } from '../../../utils/github.js';
 import { CacheService } from '../../../utils/cache.js';
 import { IssueStorageService } from '../../../utils/issue-storage.js';
-import { IconCalendar, IconX, IconChevronDown, IconChevronRight, IconUser, IconUsers, IconRefresh } from '../../../icons.jsx';
+import { RepoDetailView } from './RepoDetailView.jsx';
+import { IconCalendar, IconX, IconChevronRight, IconUser, IconUsers, IconRefresh } from '../../../icons.jsx';
 
 export function StatsTab({ tracked, user }) {
     const [rangeMode, setRangeMode] = useState('today');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
-    const [expandedRepos, setExpandedRepos] = useState({});
+    const [selectedRepo, setSelectedRepo] = useState(null);
     const [userMode, setUserMode] = useState('me');
     const [everyoneData, setEveryoneData] = useState(null);
     const [everyoneLoading, setEveryoneLoading] = useState(false);
@@ -115,10 +116,6 @@ export function StatsTab({ tracked, user }) {
         [filteredEntries]
     );
 
-    const toggleRepo = (repo) => {
-        setExpandedRepos(prev => ({ ...prev, [repo]: !prev[repo] }));
-    };
-
     const colors = [
         { bg: 'bg-accent', light: 'bg-accent-subtle', ring: 'ring-accent-ring', text: 'text-accent-text', value: 'text-accent' },
         { bg: 'bg-violet-text', light: 'bg-violet-subtle', ring: 'ring-violet-ring', text: 'text-violet-text', value: 'text-violet-value' },
@@ -132,6 +129,18 @@ export function StatsTab({ tracked, user }) {
     ];
 
     const barColors = ['bg-indigo-500', 'bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-cyan-500'];
+
+    // Detail view for a selected repo
+    if (selectedRepo) {
+        return (
+            <RepoDetailView
+                repo={selectedRepo}
+                repoDetails={repoDetails[selectedRepo]}
+                userMode={userMode}
+                onBack={() => setSelectedRepo(null)}
+            />
+        );
+    }
 
     return (
         <div className="p-4">
@@ -245,27 +254,27 @@ export function StatsTab({ tracked, user }) {
                 ) : (
                     repoBreakdown.map(({ repo, seconds, formatted }, i) => {
                         const percentage = totalFiltered > 0 ? Math.round((seconds / totalFiltered) * 100) : 0;
-                        const isExpanded = expandedRepos[repo];
-                        const details = repoDetails[repo] || {};
-                        const issues = Object.entries(details).sort((a, b) => b[1].totalSeconds - a[1].totalSeconds);
 
                         return (
-                            <div key={repo} className="mb-3">
-                                <div
-                                    className="flex items-center justify-between mb-1 cursor-pointer group"
-                                    onClick={() => toggleRepo(repo)}
-                                >
+                            <div
+                                key={repo}
+                                className="mb-3 cursor-pointer group"
+                                onClick={() => setSelectedRepo(repo)}
+                            >
+                                <div className="flex items-center justify-between mb-1">
                                     <div className="flex items-center gap-1 flex-1 min-w-0">
-                                        <span className="text-muted shrink-0 transition-transform">
-                                            {isExpanded ? <IconChevronDown size={12} /> : <IconChevronRight size={12} />}
-                                        </span>
                                         <span className="text-[13px] text-secondary truncate font-medium group-hover:text-primary transition-colors">
                                             {repo}
                                         </span>
                                     </div>
-                                    <span className="text-[11px] text-muted shrink-0 ml-2 font-mono tabular-nums">
-                                        {formatted} ({percentage}%)
-                                    </span>
+                                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                                        <span className="text-[11px] text-muted font-mono tabular-nums">
+                                            {formatted} ({percentage}%)
+                                        </span>
+                                        <span className="text-muted opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <IconChevronRight size={12} />
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className="w-full bg-raised rounded-full h-1.5">
                                     <div
@@ -273,47 +282,6 @@ export function StatsTab({ tracked, user }) {
                                         style={{ width: `${(seconds / maxSeconds) * 100}%` }}
                                     />
                                 </div>
-
-                                {/* Expanded issue/session details */}
-                                {isExpanded && (
-                                    <div className="mt-2 ml-4 border-l-2 border-border-subtle pl-3 space-y-2">
-                                        {issues.map(([issueUrl, issueData]) => (
-                                            <div key={issueUrl}>
-                                                <div className="flex justify-between items-baseline">
-                                                    <span className="text-[12px] text-secondary font-medium truncate flex-1">
-                                                        {issueData.issueNumber && (
-                                                            <span className="text-muted mr-1">{issueData.issueNumber}</span>
-                                                        )}
-                                                        {issueData.title}
-                                                    </span>
-                                                    <span className="text-[11px] text-muted shrink-0 ml-2 font-mono tabular-nums">
-                                                        {TimeService.formatTime(issueData.totalSeconds)}
-                                                    </span>
-                                                </div>
-                                                <div className="mt-1 space-y-0.5">
-                                                    {issueData.sessions
-                                                        .sort((a, b) => b.date.localeCompare(a.date))
-                                                        .map((session, si) => (
-                                                            <div key={si} className="flex items-center justify-between text-[11px]">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-faint">{session.date}</span>
-                                                                    {session.user && userMode === 'everyone' && (
-                                                                        <span className="text-[10px] text-muted bg-raised px-1.5 py-0.5 rounded-full">
-                                                                            {session.user}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                <span className="text-muted font-mono tabular-nums">
-                                                                    {TimeService.formatTime(session.seconds)}
-                                                                </span>
-                                                            </div>
-                                                        ))
-                                                    }
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
                             </div>
                         );
                     })
