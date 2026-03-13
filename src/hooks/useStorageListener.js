@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import { StorageService } from '../utils/storage.js';
 
 export function useStorageListener(key, initialValue = null) {
     const [data, setData] = useState(initialValue);
+    const initialRef = useRef(initialValue);
 
     useEffect(() => {
         const fetchData = async () => {
-            const value = (await StorageService.get(key)) || initialValue;
+            const value = (await StorageService.get(key)) ?? initialRef.current;
             setData(value);
         };
 
@@ -14,13 +15,13 @@ export function useStorageListener(key, initialValue = null) {
 
         const listener = (changes, area) => {
             if (area === 'local' && changes[key]) {
-                setData(changes[key].newValue || initialValue);
+                setData(changes[key].newValue ?? initialRef.current);
             }
         };
         chrome.storage.onChanged.addListener(listener);
 
         return () => chrome.storage.onChanged.removeListener(listener);
-    }, [key, initialValue]);
+    }, [key]);
 
     return data;
 }

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'preact/hooks';
+import { useState, useMemo, useEffect, useRef } from 'preact/hooks';
 import { TimeService } from '../../../utils/time.js';
 import { TrackedList } from './TrackedList.jsx';
 import { TimerService } from '../../../utils/timer.js';
@@ -40,7 +40,8 @@ export function CalendarView({ tracked }) {
     };
     loadActiveData();
 
-    const listener = (changes) => {
+    const listener = (changes, area) => {
+      if (area !== 'local') return;
       if (changes[STORAGE_KEYS.ACTIVE_ISSUE]) {
         setActiveIssue(changes[STORAGE_KEYS.ACTIVE_ISSUE].newValue);
       }
@@ -48,11 +49,18 @@ export function CalendarView({ tracked }) {
         setStartTime(changes[STORAGE_KEYS.START_TIME].newValue);
       }
     };
-    chrome.storage.local.onChanged.addListener(listener);
-    return () => chrome.storage.local.onChanged.removeListener(listener);
+    chrome.storage.onChanged.addListener(listener);
+    return () => chrome.storage.onChanged.removeListener(listener);
   }, []);
 
+  const intervalRef = useRef(null);
+
   useEffect(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
     if (!activeIssue || !startTime || isNaN(new Date(startTime).getTime())) {
       setCurrentTimes((prev) => {
         const newTimes = { ...prev };
@@ -62,21 +70,25 @@ export function CalendarView({ tracked }) {
       return;
     }
 
-    const updateTotalTime = async () => {
-      const totalTime = await TimerService.getTotalTimeForIssue(activeIssue);
-      const intervalId = setInterval(() => {
+    let cancelled = false;
+    TimerService.getTotalTimeForIssue(activeIssue).then((totalTime) => {
+      if (cancelled) return;
+      intervalRef.current = setInterval(() => {
         const elapsed = (Date.now() - new Date(startTime).getTime()) / 1000;
         setCurrentTimes((prev) => ({
           ...prev,
           [activeIssue]: TimeService.formatTime(elapsed + totalTime),
         }));
       }, 1000);
-      return intervalId;
-    };
+    });
 
-    let intervalId;
-    updateTotalTime().then((id) => { intervalId = id; });
-    return () => { if (intervalId) clearInterval(intervalId); };
+    return () => {
+      cancelled = true;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [activeIssue, startTime]);
 
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);

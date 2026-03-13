@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useState, useRef } from 'preact/hooks';
 import { TimerService } from '../../../utils/timer.js';
 import { TimeService } from '../../../utils/time.js';
 import { StorageService } from '../../../utils/storage.js';
@@ -29,7 +29,8 @@ export function TrackedList({ entries, showTimerControls = false }) {
         };
         loadActiveData();
 
-        const listener = (changes) => {
+        const listener = (changes, area) => {
+            if (area !== 'local') return;
             if (changes[STORAGE_KEYS.ACTIVE_ISSUE]) {
                 setActiveIssue(changes[STORAGE_KEYS.ACTIVE_ISSUE].newValue);
             }
@@ -37,37 +38,43 @@ export function TrackedList({ entries, showTimerControls = false }) {
                 setStartTime(changes[STORAGE_KEYS.START_TIME].newValue);
             }
         };
-        chrome.storage.local.onChanged.addListener(listener);
-        return () => chrome.storage.local.onChanged.removeListener(listener);
+        chrome.storage.onChanged.addListener(listener);
+        return () => chrome.storage.onChanged.removeListener(listener);
     }, []);
 
+    const intervalRef = useRef(null);
+
     useEffect(() => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+
         if (!showTimerControls) return;
 
-        const updateTimes = async () => {
-            if (!activeIssue || !startTime || isNaN(new Date(startTime).getTime())) {
-                setCurrentTimes((prev) => {
-                    const newTimes = { ...prev };
-                    delete newTimes[activeIssue];
-                    return newTimes;
-                });
-                return;
+        if (!activeIssue || !startTime || isNaN(new Date(startTime).getTime())) {
+            setCurrentTimes((prev) => {
+                const newTimes = { ...prev };
+                delete newTimes[activeIssue];
+                return newTimes;
+            });
+            return;
+        }
+
+        intervalRef.current = setInterval(() => {
+            const elapsed = (Date.now() - new Date(startTime).getTime()) / 1000;
+            setCurrentTimes((prev) => ({
+                ...prev,
+                [activeIssue]: TimeService.formatTime(elapsed),
+            }));
+        }, TIME_UPDATE_INTERVAL);
+
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
             }
-
-            const intervalId = setInterval(() => {
-                const elapsed = (Date.now() - new Date(startTime).getTime()) / 1000;
-                setCurrentTimes((prev) => ({
-                    ...prev,
-                    [activeIssue]: TimeService.formatTime(elapsed),
-                }));
-            }, TIME_UPDATE_INTERVAL);
-
-            return intervalId;
         };
-
-        let intervalId;
-        updateTimes().then((id) => { intervalId = id; });
-        return () => { if (intervalId) clearInterval(intervalId); };
     }, [activeIssue, startTime, showTimerControls]);
 
     const handleTimerClick = async (entry) => {

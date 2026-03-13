@@ -1,7 +1,7 @@
 export class StorageService {
     static async get(key) {
         return new Promise((resolve) => {
-            chrome.storage.local.get(key, (data) => resolve(data[key] || null));
+            chrome.storage.local.get(key, (data) => resolve(data[key] ?? null));
         });
     }
 
@@ -22,7 +22,7 @@ export class StorageService {
             chrome.storage.local.get(keys, (data) => {
                 const result = {};
                 for (const key of keys) {
-                    result[key] = data[key] || null;
+                    result[key] = data[key] ?? null;
                 }
                 resolve(result);
             });
