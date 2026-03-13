@@ -59,17 +59,20 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 // The user stops the timer explicitly via the popup or content script, which calls
 // TimerService.stopTimer() — the single source of truth for stop logic.
 
-// Forward timerStarted/timerStopped messages to all GitHub tabs
+// Forward timerStarted/timerStopped messages to all GitHub tabs.
+// Returns true to keep the message channel open — this tells Chrome the response
+// will be sent asynchronously, AND keeps the service worker alive until sendResponse
+// is called (prevents the SW from being killed mid-forwarding).
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'timerStarted' || message.action === 'timerStopped') {
-        chrome.tabs.query({ url: '*://github.com/*' }, (tabs) => {
+        chrome.tabs.query({ url: 'https://github.com/*' }, (tabs) => {
             tabs.forEach((tab) => {
                 chrome.tabs.sendMessage(tab.id, message, () => {
-                    // Ignore errors for tabs that can't receive messages
                     void chrome.runtime.lastError;
                 });
             });
+            sendResponse({ forwarded: tabs.length });
         });
-        sendResponse({ received: true });
+        return true; // keep message channel open for async sendResponse
     }
 });
