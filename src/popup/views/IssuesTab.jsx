@@ -1,76 +1,36 @@
 import { useState, useEffect, useMemo } from 'preact/hooks';
 import { IssueRow } from '../../components/IssueRow.jsx';
 import { PinRepoModal } from '../../components/PinRepoModal.jsx';
-import { CacheService } from '../../utils/cache.js';
-import { PinnedReposService } from '../../utils/pinned-repos.js';
-import { GitHubService } from '../../utils/github.js';
 import { TimerService } from '../../utils/timer.js';
 import { IssueStorageService } from '../../utils/issue-storage.js';
 import { STORAGE_KEYS } from '../../utils/constants.js';
 import { useStorageListener } from '../../hooks/useStorageListener.js';
 import { useActiveTimer } from '../../hooks/useActiveTimer.js';
+import { useIssuesData } from '../../hooks/useIssuesData.js';
 import { IconSearch, IconPlus, IconChevronDown, IconChevronRight, IconRefresh, IconX, IconPin } from '../../icons.jsx';
 
 export function IssuesTab() {
-    const [pinnedRepos, setPinnedRepos] = useState([]);
-    const [repoIssues, setRepoIssues] = useState({});
     const [expandedRepos, setExpandedRepos] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
-    const [loading, setLoading] = useState({});
     const [showPinModal, setShowPinModal] = useState(false);
     const [filter, setFilter] = useState('open');
-    const [currentUser, setCurrentUser] = useState(null);
 
     const tracked = useStorageListener(STORAGE_KEYS.TRACKED_TIMES, []);
     const { activeIssue } = useActiveTimer();
+    const { pinnedRepos, repoIssues, loading, currentUser, refreshRepoIssues, pinRepo, unpinRepo } = useIssuesData();
 
+    // Expand all repos when pinnedRepos first loads
     useEffect(() => {
-        const load = async () => {
-            const repos = await PinnedReposService.getPinnedRepos();
-            setPinnedRepos(repos);
-
-            const cachedUser = await CacheService.getCachedUser();
-            if (cachedUser) {
-                setCurrentUser(cachedUser.login);
-            } else {
-                try {
-                    const user = await GitHubService.getUser();
-                    await CacheService.setCachedUser({ login: user.login, avatar_url: user.avatar_url, name: user.name });
-                    setCurrentUser(user.login);
-                } catch (e) {
-                    console.error('Failed to fetch user:', e);
+        if (pinnedRepos.length > 0) {
+            setExpandedRepos((prev) => {
+                const next = { ...prev };
+                for (const r of pinnedRepos) {
+                    if (!(r.fullName in next)) next[r.fullName] = true;
                 }
-            }
-
-            const expanded = {};
-            repos.forEach((r) => (expanded[r.fullName] = true));
-            setExpandedRepos(expanded);
-
-            for (const repo of repos) {
-                const cached = await CacheService.getCachedIssues(repo.fullName);
-                if (cached) {
-                    setRepoIssues((prev) => ({ ...prev, [repo.fullName]: cached }));
-                } else {
-                    refreshRepoIssues(repo);
-                }
-            }
-        };
-        load();
-    }, []);
-
-    const refreshRepoIssues = async (repo) => {
-        setLoading((prev) => ({ ...prev, [repo.fullName]: true }));
-        try {
-            const [owner, repoName] = repo.fullName.split('/');
-            const issues = await GitHubService.getRepoIssues(owner, repoName);
-            const simplified = issues.map((i) => GitHubService.simplifyIssue(i, repo.fullName));
-            await CacheService.setCachedIssues(repo.fullName, simplified);
-            setRepoIssues((prev) => ({ ...prev, [repo.fullName]: simplified }));
-        } catch (error) {
-            console.error(`Failed to fetch issues for ${repo.fullName}:`, error);
+                return next;
+            });
         }
-        setLoading((prev) => ({ ...prev, [repo.fullName]: false }));
-    };
+    }, [pinnedRepos]);
 
     const trackedTimeByIssue = useMemo(() => {
         const map = {};
@@ -248,15 +208,7 @@ export function IssuesTab() {
                                     <button
                                         onClick={async (e) => {
                                             e.stopPropagation();
-                                            await PinnedReposService.removePinnedRepo(repo.fullName);
-                                            setPinnedRepos((prev) =>
-                                                prev.filter((r) => r.fullName !== repo.fullName)
-                                            );
-                                            setRepoIssues((prev) => {
-                                                const next = { ...prev };
-                                                delete next[repo.fullName];
-                                                return next;
-                                            });
+                                            await unpinRepo(repo.fullName);
                                         }}
                                         className="text-muted hover:text-danger-text cursor-pointer p-0.5 rounded hover:bg-raised transition-colors"
                                         title="Unpin repo"
@@ -301,11 +253,8 @@ export function IssuesTab() {
                 <PinRepoModal
                     onClose={() => setShowPinModal(false)}
                     onPin={async (repo) => {
-                        await PinnedReposService.addPinnedRepo(repo);
-                        const updated = await PinnedReposService.getPinnedRepos();
-                        setPinnedRepos(updated);
+                        await pinRepo(repo);
                         setExpandedRepos((prev) => ({ ...prev, [repo.fullName]: true }));
-                        refreshRepoIssues(repo);
                     }}
                     pinnedRepos={pinnedRepos}
                 />
