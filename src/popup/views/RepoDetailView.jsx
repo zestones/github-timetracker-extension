@@ -117,7 +117,7 @@ export function RepoDetailView({ repo, repoDetails, userMode, onBack }) {
                         type="text"
                         placeholder="Filter issues..."
                         value={filterText}
-                        onInput={(e) => setFilterText(e.target.value)}
+                        onInput={(e) => setFilterText(e.currentTarget.value)}
                         className="flex-1 text-[12px] border border-border-default rounded-lg px-2.5 py-1.5 bg-surface focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary placeholder:text-tertiary"
                     />
                 )}

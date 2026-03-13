@@ -269,14 +269,14 @@ export function StatsTab({ tracked, user }) {
                     <input
                         type="date"
                         value={customStart}
-                        onInput={(e) => setCustomStart(e.target.value)}
+                        onInput={(e) => setCustomStart(e.currentTarget.value)}
                         className="text-[12px] border border-border-default rounded-lg px-2.5 py-1.5 flex-1 bg-surface focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary"
                     />
                     <span className="text-faint text-[11px]">to</span>
                     <input
                         type="date"
                         value={customEnd}
-                        onInput={(e) => setCustomEnd(e.target.value)}
+                        onInput={(e) => setCustomEnd(e.currentTarget.value)}
                         className="text-[12px] border border-border-default rounded-lg px-2.5 py-1.5 flex-1 bg-surface focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary"
                     />
                 </div>

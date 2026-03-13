@@ -6,13 +6,16 @@ import { STORAGE_KEYS } from './constants.js';
 import { IssueStorageService } from "./issue-storage.js";
 
 export class TimerService {
+    /** @param {string} issueUrl @returns {Promise<number>} Total seconds */
     static async getTotalTimeForIssue(issueUrl) {
+        /** @type {import('./schema.js').TrackedTimeEntry[]} */
         const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) ?? [];
         return trackedTimes
             .filter(entry => entry.issueUrl === issueUrl)
             .reduce((total, entry) => total + (entry.seconds || 0), 0);
     }
 
+    /** @param {string} issueUrl @param {string|null} [issueTitle] @returns {Promise<import('./schema.js').TimerResult>} */
     static async startTimer(issueUrl, issueTitle = null) {
         try {
             const [activeIssueUrl, startTime, issue] = await Promise.all([
@@ -51,6 +54,7 @@ export class TimerService {
         }
     }
 
+    /** @param {string} issueUrl @returns {Promise<import('./schema.js').TimerResult>} */
     static async stopTimer(issueUrl) {
         try {
             const [startTime, githubToken, trackedTimes, existingIssue] = await Promise.all([

@@ -68,7 +68,7 @@ export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
                             type="text"
                             placeholder="Search repositories..."
                             value={query}
-                            onInput={(e) => handleSearch(e.target.value)}
+                            onInput={(e) => handleSearch(e.currentTarget.value)}
                             className="w-full pl-8 pr-3 py-2 text-[13px] bg-raised border border-border-default rounded-lg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary placeholder:text-muted"
                         />
                     </div>

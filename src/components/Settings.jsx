@@ -152,7 +152,7 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
                             <input
                                 type="password"
                                 value={tokenInput}
-                                onInput={(e) => setTokenInput(e.target.value)}
+                                onInput={(e) => setTokenInput(e.currentTarget.value)}
                                 placeholder="GitHub Token (ghp_...)"
                                 className="w-full px-3 py-2 text-[13px] bg-base border border-border-default rounded-lg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary placeholder:text-muted mb-2"
                             />

@@ -116,7 +116,7 @@ export function App() {
                     <input
                         type="password"
                         value={tokenInput}
-                        onInput={(e) => setTokenInput(e.target.value)}
+                        onInput={(e) => setTokenInput(e.currentTarget.value)}
                         placeholder="GitHub Personal Access Token"
                         className="w-full px-3.5 py-2.5 text-[13px] bg-surface border border-border-default rounded-lg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary placeholder:text-muted mb-2"
                     />

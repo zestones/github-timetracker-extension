@@ -1,4 +1,5 @@
 export class StorageService {
+    /** @param {string} key @returns {Promise<any>} */
     static async get(key) {
         const data = await chrome.storage.local.get(key);
         return data[key] ?? null;

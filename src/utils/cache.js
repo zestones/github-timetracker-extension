@@ -21,20 +21,22 @@ export class CacheService {
         await StorageService.remove(`${CACHE_PREFIX}${key}`);
     }
 
-    // User cache
+    /** @returns {Promise<import('./schema.js').CachedUser|null>} */
     static async getCachedUser() {
         return this.get('user');
     }
 
+    /** @param {import('./schema.js').CachedUser} user */
     static async setCachedUser(user) {
         await this.set('user', user, USER_CACHE_TTL);
     }
 
-    // Repo issues cache
+    /** @param {string} fullName @returns {Promise<import('./schema.js').SimplifiedIssue[]|null>} */
     static async getCachedIssues(fullName) {
         return this.get(`issues:${fullName}`);
     }
 
+    /** @param {string} fullName @param {import('./schema.js').SimplifiedIssue[]} issues */
     static async setCachedIssues(fullName, issues) {
         await this.set(`issues:${fullName}`, issues);
     }

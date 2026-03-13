@@ -8,7 +8,8 @@
     "build:popup": "vite build --config vite.config.popup.js",
     "build:background": "vite build --config vite.config.background.js",
     "build:content": "vite build --config vite.config.content.js",
-    "build": "rm -rf dist && npm run build:popup && npm run build:background && npm run build:content"
+    "build": "rm -rf dist && npm run build:popup && npm run build:background && npm run build:content",
+    "typecheck": "tsc -p jsconfig.json --noEmit"
   },
   "dependencies": {
     "@preact/preset-vite": "^2.5.0",
@@ -17,7 +18,9 @@
     "tailwindcss": "^4.1.6"
   },
   "devDependencies": {
+    "@types/chrome": "^0.1.37",
     "nodemon": "^3.1.10",
+    "typescript": "^5.9.3",
     "vite": "^6.3.5",
     "vite-plugin-css-injected-by-js": "^3.5.2",
     "vite-plugin-static-copy": "^2.3.1"

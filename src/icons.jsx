@@ -1,4 +1,4 @@
-function Svg({ children, size = 18, className, ...props }) {
+function Svg({ children, size = 18, className = "", ...props }) {
     return (
         <svg
             width={size}
@@ -17,7 +17,7 @@ function Svg({ children, size = 18, className, ...props }) {
     );
 }
 
-export function IconIssues({ size, className }) {
+export function IconIssues({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
@@ -30,7 +30,7 @@ export function IconIssues({ size, className }) {
     );
 }
 
-export function IconChart({ size, className }) {
+export function IconChart({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M3 3v18h18" />
@@ -39,7 +39,7 @@ export function IconChart({ size, className }) {
     );
 }
 
-export function IconCalendar({ size, className }) {
+export function IconCalendar({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <rect x="3" y="4" width="18" height="18" rx="2" />
@@ -50,7 +50,7 @@ export function IconCalendar({ size, className }) {
     );
 }
 
-export function IconSettings({ size, className }) {
+export function IconSettings({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
@@ -59,7 +59,7 @@ export function IconSettings({ size, className }) {
     );
 }
 
-export function IconSearch({ size, className }) {
+export function IconSearch({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <circle cx="11" cy="11" r="8" />
@@ -68,7 +68,7 @@ export function IconSearch({ size, className }) {
     );
 }
 
-export function IconPlus({ size, className }) {
+export function IconPlus({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M5 12h14" />
@@ -77,7 +77,7 @@ export function IconPlus({ size, className }) {
     );
 }
 
-export function IconX({ size, className }) {
+export function IconX({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M18 6 6 18" />
@@ -86,7 +86,7 @@ export function IconX({ size, className }) {
     );
 }
 
-export function IconChevronDown({ size, className }) {
+export function IconChevronDown({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="m6 9 6 6 6-6" />
@@ -94,7 +94,7 @@ export function IconChevronDown({ size, className }) {
     );
 }
 
-export function IconChevronRight({ size, className }) {
+export function IconChevronRight({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="m9 18 6-6-6-6" />
@@ -102,7 +102,7 @@ export function IconChevronRight({ size, className }) {
     );
 }
 
-export function IconChevronLeft({ size, className }) {
+export function IconChevronLeft({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="m15 18-6-6 6-6" />
@@ -110,7 +110,7 @@ export function IconChevronLeft({ size, className }) {
     );
 }
 
-export function IconRefresh({ size, className }) {
+export function IconRefresh({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
@@ -121,7 +121,7 @@ export function IconRefresh({ size, className }) {
     );
 }
 
-export function IconPlay({ size, className }) {
+export function IconPlay({ size, className = "" }) {
     return (
         <svg
             width={size || 18}
@@ -138,7 +138,7 @@ export function IconPlay({ size, className }) {
     );
 }
 
-export function IconStop({ size, className }) {
+export function IconStop({ size, className = "" }) {
     return (
         <svg
             width={size || 18}
@@ -159,7 +159,7 @@ export function IconStop({ size, className }) {
     );
 }
 
-export function IconPin({ size, className }) {
+export function IconPin({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M12 17v5" />
@@ -168,7 +168,7 @@ export function IconPin({ size, className }) {
     );
 }
 
-export function IconCheck({ size, className }) {
+export function IconCheck({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M20 6 9 17l-5-5" />
@@ -176,7 +176,7 @@ export function IconCheck({ size, className }) {
     );
 }
 
-export function IconTrash({ size, className }) {
+export function IconTrash({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M3 6h18" />
@@ -186,7 +186,7 @@ export function IconTrash({ size, className }) {
     );
 }
 
-export function IconDownload({ size, className }) {
+export function IconDownload({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -196,7 +196,7 @@ export function IconDownload({ size, className }) {
     );
 }
 
-export function IconClock({ size, className }) {
+export function IconClock({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <circle cx="12" cy="12" r="10" />
@@ -205,7 +205,7 @@ export function IconClock({ size, className }) {
     );
 }
 
-export function IconExternalLink({ size, className }) {
+export function IconExternalLink({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M15 3h6v6" />
@@ -215,7 +215,7 @@ export function IconExternalLink({ size, className }) {
     );
 }
 
-export function IconGitHub({ size = 24, className }) {
+export function IconGitHub({ size = 24, className = "" }) {
     return (
         <svg
             width={size}
@@ -229,7 +229,7 @@ export function IconGitHub({ size = 24, className }) {
     );
 }
 
-export function IconUnpin({ size, className }) {
+export function IconUnpin({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="m2 2 20 20" />
@@ -240,7 +240,7 @@ export function IconUnpin({ size, className }) {
     );
 }
 
-export function IconSun({ size, className }) {
+export function IconSun({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <circle cx="12" cy="12" r="4" />
@@ -252,7 +252,7 @@ export function IconSun({ size, className }) {
     );
 }
 
-export function IconMoon({ size, className }) {
+export function IconMoon({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
@@ -260,7 +260,7 @@ export function IconMoon({ size, className }) {
     );
 }
 
-export function IconMonitor({ size, className }) {
+export function IconMonitor({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <rect width="20" height="14" x="2" y="3" rx="2" />
@@ -270,7 +270,7 @@ export function IconMonitor({ size, className }) {
     );
 }
 
-export function IconUser({ size, className }) {
+export function IconUser({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
@@ -279,7 +279,7 @@ export function IconUser({ size, className }) {
     );
 }
 
-export function IconUsers({ size, className }) {
+export function IconUsers({ size, className = "" }) {
     return (
         <Svg size={size} className={className}>
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />

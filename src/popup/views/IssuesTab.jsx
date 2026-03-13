@@ -131,7 +131,7 @@ export function IssuesTab() {
                     type="text"
                     placeholder="Search issues..."
                     value={searchTerm}
-                    onInput={(e) => setSearchTerm(e.target.value)}
+                    onInput={(e) => setSearchTerm(e.currentTarget.value)}
                     className="w-full pl-8 pr-3 py-2 text-[13px] bg-surface border border-border-default rounded-lg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary placeholder:text-muted"
                 />
             </div>
