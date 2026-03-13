@@ -67,6 +67,24 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
                 return;
             }
 
+            // Fetch issue titles from GitHub API for proper display
+            const issueTitleMap = {};
+            const repoSet = new Set(recovered.map(item => {
+                const { owner, repo } = GitHubService.parseIssueUrl(item.issueUrl);
+                return `${owner}/${repo}`;
+            }));
+            for (const fullRepo of repoSet) {
+                const [owner, repoName] = fullRepo.split('/');
+                try {
+                    const issues = await GitHubService.getRepoIssues(owner, repoName);
+                    for (const issue of issues) {
+                        issueTitleMap[`/${owner}/${repoName}/issues/${issue.number}`] = issue.title;
+                    }
+                } catch (e) {
+                    console.error(`Failed to fetch issue titles for ${fullRepo}:`, e);
+                }
+            }
+
             const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
             const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) || {};
             const username = await GitHubService.getCurrentUsername();
@@ -89,10 +107,14 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
                     trackedTimes.push(...filtered);
 
                     const { owner, repo, issueNumber } = GitHubService.parseIssueUrl(item.issueUrl);
+                    const apiTitle = issueTitleMap[item.issueUrl];
+                    const title = apiTitle
+                        ? `(${owner}) ${repo} | ${apiTitle} | #${issueNumber}`
+                        : `(${owner}) ${repo} | #${issueNumber}`;
                     for (const entry of item.entries) {
                         trackedTimes.push({
                             issueUrl: item.issueUrl,
-                            title: `(${owner}) ${repo} | #${issueNumber}`,
+                            title,
                             seconds: entry.seconds,
                             date: entry.date,
                         });
@@ -103,9 +125,13 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
                 const issueExists = await IssueStorageService.exists(item.issueUrl);
                 if (!issueExists) {
                     const { owner, repo, issueNumber } = GitHubService.parseIssueUrl(item.issueUrl);
+                    const apiTitle = issueTitleMap[item.issueUrl];
+                    const title = apiTitle
+                        ? `(${owner}) ${repo} | ${apiTitle} | #${issueNumber}`
+                        : `(${owner}) ${repo} | #${issueNumber}`;
                     await IssueStorageService.add({
                         url: item.issueUrl,
-                        title: `(${owner}) ${repo} | #${issueNumber}`,
+                        title,
                     });
                 }
             }

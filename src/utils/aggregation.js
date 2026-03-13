@@ -26,6 +26,13 @@ export class AggregationService {
         if (parts.length >= 3) {
             return { issueTitle: parts.slice(1, -1).join(' | '), issueNumber: parts[parts.length - 1] };
         }
+        // Handle 2-part format from older syncs: "(owner) repo | #number"
+        if (parts.length === 2) {
+            const numPart = parts[1].trim();
+            if (numPart.startsWith('#')) {
+                return { issueTitle: '', issueNumber: numPart };
+            }
+        }
         return { issueTitle: title, issueNumber: '' };
     }
 
