@@ -1,0 +1,85 @@
+# =============================================================
+# CI Quality Gates — format, lint, typecheck
+# =============================================================
+# Trigger: push to main/dev, pull requests to main/dev
+# =============================================================
+# Formatting: Instead of failing on bad formatting, the
+# auto-format job formats code and commits the changes.
+# Other jobs only run when formatting is already clean.
+# =============================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # -------------------------------------------------------
+  # Auto-format — format code and commit if needed
+  # -------------------------------------------------------
+  auto-format:
+    name: "Auto-format (biome)"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      changes_detected: ${{ steps.auto-commit.outputs.changes_detected }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          token: ${{ secrets.PAT_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Format & fix (biome)
+        run: npx @biomejs/biome check --write ./src
+      - name: Commit & push formatting changes
+        id: auto-commit
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: auto-format via biome"
+          commit_author: "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+  # -------------------------------------------------------
+  # Lint — biome lint (read-only)
+  # -------------------------------------------------------
+  lint:
+    name: "Lint (biome)"
+    needs: auto-format
+    if: needs.auto-format.outputs.changes_detected == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx @biomejs/biome check ./src
+
+  # -------------------------------------------------------
+  # Typecheck — tsc via JSDoc
+  # -------------------------------------------------------
+  typecheck:
+    name: "Typecheck (tsc)"
+    needs: auto-format
+    if: needs.auto-format.outputs.changes_detected == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck

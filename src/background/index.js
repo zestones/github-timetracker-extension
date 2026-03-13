@@ -1,29 +1,22 @@
 // background/index.js
-import { StorageService } from '../utils/storage.js';
-import { GitHubService } from '../utils/github.js';
-import { GitHubStorageService } from '../utils/github-storage.js';
-import { STORAGE_KEYS, CACHE_REFRESH_INTERVAL } from '../utils/constants.js';
-import { IssueStorageService } from "../utils/issue-storage.js";
-import { CacheService } from '../utils/cache.js';
+
+import { CacheService } from '../services/cache.service.js';
+import { GitHubService } from '../services/github.service.js';
+import { GitHubStorageService } from '../services/github-storage.service.js';
+import { PinnedReposService } from '../services/pinned-repos.service.js';
+import { StorageService } from '../services/storage.service.js';
+import { CACHE_REFRESH_INTERVAL, SCHEMA_VERSION, STORAGE_KEYS } from '../utils/constants.utils.js';
 
 async function refreshCachedIssues() {
     const token = await GitHubStorageService.getGitHubToken();
     if (!token) return;
 
-    const pinnedRepos = await CacheService.getPinnedRepos();
+    const pinnedRepos = await PinnedReposService.getPinnedRepos();
     for (const repo of pinnedRepos) {
         try {
             const [owner, repoName] = repo.fullName.split('/');
             const issues = await GitHubService.getRepoIssues(owner, repoName);
-            const simplified = issues.map((i) => ({
-                number: i.number,
-                title: i.title,
-                issueUrl: `/${repo.fullName}/issues/${i.number}`,
-                state: i.state,
-                labels: (i.labels || []).map((l) => l.name),
-                assignees: (i.assignees || []).map((a) => a.login),
-                user: i.user?.login || '',
-            }));
+            const simplified = issues.map((i) => GitHubService.simplifyIssue(i, repo.fullName));
             await CacheService.setCachedIssues(repo.fullName, simplified);
         } catch (error) {
             console.error(`Background refresh failed for ${repo.fullName}:`, error);
@@ -43,8 +36,23 @@ async function refreshCachedIssues() {
     }
 }
 
-// Set up periodic alarm for cache refresh
-chrome.alarms.create('refreshCache', { periodInMinutes: CACHE_REFRESH_INTERVAL });
+// Create the cache-refresh alarm only once — on install or extension update.
+// Using onInstalled (not top-level) because top-level code runs every time the
+// service worker wakes up, which would reset the alarm countdown and prevent it
+// from ever firing if any event wakes the SW within the period interval.
+chrome.runtime.onInstalled.addListener(async () => {
+    // Set schema version on install/update for future data migrations
+    const currentVersion = await StorageService.get(STORAGE_KEYS.SCHEMA_VERSION);
+    if (!currentVersion || currentVersion < SCHEMA_VERSION) {
+        await StorageService.set(STORAGE_KEYS.SCHEMA_VERSION, SCHEMA_VERSION);
+    }
+
+    chrome.alarms.get('refreshCache', (existing) => {
+        if (!existing) {
+            chrome.alarms.create('refreshCache', { periodInMinutes: CACHE_REFRESH_INTERVAL });
+        }
+    });
+});
 
 chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === 'refreshCache') {
@@ -52,92 +60,27 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     }
 });
 
-async function handleTimerStop(reason) {
-    const { activeIssue, startTime, trackedTimes } = await StorageService.getMultiple([
-        STORAGE_KEYS.ACTIVE_ISSUE,
-        STORAGE_KEYS.START_TIME,
-        STORAGE_KEYS.TRACKED_TIMES,
-    ]);
+// NOTE: No onSuspend handler — MV3 service workers are killed immediately after
+// onSuspend fires, so async work (storage writes, API calls) gets aborted mid-flight.
+// Timer state (activeIssue + startTime) is already persisted in chrome.storage.local
+// when the timer starts, so it survives SW restarts and browser restarts.
+// The user stops the timer explicitly via the popup or content script, which calls
+// TimerService.stopTimer() — the single source of truth for stop logic.
 
-    if (activeIssue && startTime) {
-        const timeSpent = (Date.now() - new Date(startTime).getTime()) / 1000;
-        const issue = await IssueStorageService.getByUrl(activeIssue);
-        console.log(`Stopped due to ${reason}. Tracked ${timeSpent} seconds on ${activeIssue}`);
-
-        let issueInfo;
-        try {
-            issueInfo = GitHubService.parseIssueUrl(activeIssue);
-        } catch (error) {
-            console.error('Failed to parse issue URL:', error);
-            return;
-        }
-
-        const { owner, repo, issueNumber } = issueInfo;
-        const taskTitle = issue?.title || 'Untitled';
-
-        const tracked = trackedTimes || [];
-        tracked.push({
-            issueUrl: activeIssue,
-            title: taskTitle,
-            seconds: timeSpent,
-            date: new Date().toISOString().slice(0, 10),
-        });
-        await StorageService.set(STORAGE_KEYS.TRACKED_TIMES, tracked);
-
-        const token = await GitHubStorageService.getGitHubToken();
-        if (token) {
-            try {
-                const issueEntries = tracked
-                    .filter(e => e.issueUrl === activeIssue)
-                    .map(e => ({ date: e.date, seconds: e.seconds }));
-
-                const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) || {};
-                const username = await GitHubService.getCurrentUsername();
-                const commentKey = `${username}:${activeIssue}`;
-                const result = await GitHubService.createOrUpdateTrackerComment({
-                    owner, repo, issueNumber,
-                    entries: issueEntries,
-                    cachedCommentId: commentIds[commentKey],
-                });
-
-                commentIds[commentKey] = result.commentId;
-                await StorageService.set(STORAGE_KEYS.COMMENT_IDS, commentIds);
-            } catch (error) {
-                console.error('Failed to sync tracker comment:', error);
-            }
-        }
-
-        await StorageService.removeMultiple([
-            STORAGE_KEYS.ACTIVE_ISSUE,
-            STORAGE_KEYS.START_TIME,
-        ]);
-    }
-}
-
-chrome.runtime.onStartup.addListener(async () => {
-    await handleTimerStop('browser restart');
-});
-
-chrome.runtime.onSuspend.addListener(async () => {
-    await handleTimerStop('browser closing');
-});
-
-// Пересылка сообщений timerStarted/timerStopped ко всем вкладкам GitHub
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('Background received message:', message);
+// Forward timerStarted/timerStopped messages to all GitHub tabs.
+// Returns true to keep the message channel open — this tells Chrome the response
+// will be sent asynchronously, AND keeps the service worker alive until sendResponse
+// is called (prevents the SW from being killed mid-forwarding).
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.action === 'timerStarted' || message.action === 'timerStopped') {
-        // Рассылаем сообщение всем вкладкам GitHub
-        chrome.tabs.query({ url: '*://github.com/*' }, (tabs) => {
+        chrome.tabs.query({ url: 'https://github.com/*' }, (tabs) => {
             tabs.forEach((tab) => {
-                chrome.tabs.sendMessage(tab.id, message, (response) => {
-                    if (chrome.runtime.lastError) {
-                        console.log(`Failed to send message to tab ${tab.id}:`, chrome.runtime.lastError.message);
-                    } else {
-                        console.log(`Message sent to tab ${tab.id}, response:`, response);
-                    }
+                chrome.tabs.sendMessage(tab.id, message, () => {
+                    void chrome.runtime.lastError;
                 });
             });
+            sendResponse({ forwarded: tabs.length });
         });
-        sendResponse({ received: true });
+        return true; // keep message channel open for async sendResponse
     }
 });

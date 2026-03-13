@@ -1,55 +1,51 @@
 // content/injectTimerButton.js
-import { TimerService } from '../utils/timer.js';
-import { TimeService } from '../utils/time.js';
-import { addStorageListener } from '../utils/storage-listener.js';
-import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../utils/constants.js';
 
-console.log('injectTimerButton module loaded, timestamp:', Date.now());
+import { StorageService } from '../services/storage.service.js';
+import { addStorageListener } from '../services/storage-listener.service.js';
+import { TimerService } from '../services/timer.service.js';
+import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../utils/constants.utils.js';
+import { TimeService } from '../utils/time.utils.js';
+import { getIssueTitle, isIssuePage } from './helpers.js';
 
-// Флаг для предотвращения повторных инъекций на одной странице
+// Flag to prevent duplicate injections on same page
 let isInjected = false;
+// Cleanup function for the current button's resources (interval + storage listener).
+// Called on SPA navigation to prevent listener leaks.
+let currentCleanup = null;
 
-// Функция для сброса флага isInjected
+// Reset injection flag and clean up resources on SPA navigation
 export function resetInjectedFlag() {
-    console.log('resetInjectedFlag: resetting isInjected');
+    if (currentCleanup) {
+        currentCleanup();
+        currentCleanup = null;
+    }
     isInjected = false;
 }
 
 export async function injectTimerButton() {
     if (!isIssuePage()) {
-        console.log('injectTimerButton: skipped (not an issue page)');
         return;
     }
 
     const container = document.querySelector('[data-testid="issue-metadata-fixed"]');
     const buttonExists = document.querySelector('#track-time-btn');
     if (!container || buttonExists || isInjected) {
-        console.log(`injectTimerButton: skipped (container: ${!!container}, buttonExists: ${!!buttonExists}, isInjected: ${isInjected})`);
         return;
     }
-
-    // Удаляем существующие кнопки
-    const existingButtons = document.querySelectorAll('#track-time-btn');
-    existingButtons.forEach((btn) => {
-        if (btn.dataset.intervalId) {
-            clearInterval(btn.dataset.intervalId);
-        }
-        btn.remove();
-    });
-    console.log(`injectTimerButton: removed ${existingButtons.length} existing buttons`);
 
     const btn = createTimerButton();
     isInjected = true;
 
     const updateButton = async () => {
         if (!document.querySelector('#track-time-btn')) {
-            console.log('updateButton: button not found, skipping update');
             return;
         }
-        console.log('updateButton: fetching storage data');
-        const { activeIssue, startTime } = await getStorageData();
-        const totalTime = await TimerService.getTotalTimeForIssue(location.pathname) || 0;
-        if (activeIssue === location.pathname && startTime && !isNaN(new Date(startTime).getTime())) {
+        const { activeIssue, startTime } = await StorageService.getMultiple([
+            STORAGE_KEYS.ACTIVE_ISSUE,
+            STORAGE_KEYS.START_TIME,
+        ]);
+        const totalTime = (await TimerService.getTotalTimeForIssue(location.pathname)) || 0;
+        if (activeIssue === location.pathname && startTime && !Number.isNaN(new Date(startTime).getTime())) {
             updateButtonText(btn, startTime, totalTime);
             if (!btn.dataset.intervalId) {
                 startButtonUpdateInterval(btn, totalTime);
@@ -57,51 +53,45 @@ export async function injectTimerButton() {
         } else {
             btn.textContent = `${TimeService.formatTime(0, totalTime)} Start Timer`;
             if (btn.dataset.intervalId) {
-                clearInterval(btn.dataset.intervalId);
+                clearInterval(Number(btn.dataset.intervalId));
                 delete btn.dataset.intervalId;
             }
         }
     };
 
-    // Добавляем кнопку в DOM перед обновлением
     container.append(btn);
-    console.log('injectTimerButton: button appended');
 
-    // Инициализация кнопки
     await updateButton();
 
-    // Слушатель кликов
+    // Click listener
     btn.addEventListener('click', async () => {
-        console.log('track-time-btn clicked');
-        const { activeIssue, startTime } = await getStorageData();
-        if (activeIssue === location.pathname && startTime && !isNaN(new Date(startTime).getTime())) {
-            await TimerService.stopTimer(location.pathname, btn);
+        const { activeIssue, startTime } = await StorageService.getMultiple([
+            STORAGE_KEYS.ACTIVE_ISSUE,
+            STORAGE_KEYS.START_TIME,
+        ]);
+        if (activeIssue === location.pathname && startTime && !Number.isNaN(new Date(startTime).getTime())) {
+            await TimerService.stopTimer(location.pathname);
         } else {
-            await TimerService.startTimer(location.pathname, btn);
+            const title = getIssueTitle();
+            await TimerService.startTimer(location.pathname, title);
         }
-        await updateButton(); // Обновляем кнопку после клика
+        await updateButton();
     });
 
-    // Слушатель изменений trackedTimes
+    // Listen for trackedTimes changes
     const removeListener = addStorageListener(STORAGE_KEYS.TRACKED_TIMES, () => {
-        console.log('storageListener: trackedTimes changed');
         updateButton();
     });
 
-    // Очистка при выходе
-    window.addEventListener('unload', () => {
-        console.log('injectTimerButton: cleaning up');
+    // Store cleanup for SPA navigation (called by resetInjectedFlag).
+    // On real page unload, the entire JS context is destroyed — no manual cleanup needed.
+    currentCleanup = () => {
         if (btn.dataset.intervalId) {
-            clearInterval(btn.dataset.intervalId);
+            clearInterval(Number(btn.dataset.intervalId));
             delete btn.dataset.intervalId;
         }
         removeListener();
-        isInjected = false;
-    });
-}
-
-function isIssuePage() {
-    return location.pathname.match(/^\/[^/]+\/[^/]+\/issues\/\d+$/);
+    };
 }
 
 function createTimerButton() {
@@ -111,17 +101,6 @@ function createTimerButton() {
     btn.className = 'btn btn-sm';
     btn.textContent = 'Start Timer';
     return btn;
-}
-
-async function getStorageData() {
-    return new Promise((resolve) => {
-        chrome.storage.local.get([STORAGE_KEYS.ACTIVE_ISSUE, STORAGE_KEYS.START_TIME], (data) => {
-            resolve({
-                activeIssue: data[STORAGE_KEYS.ACTIVE_ISSUE] || null,
-                startTime: data[STORAGE_KEYS.START_TIME] || null,
-            });
-        });
-    });
 }
 
 function updateButtonText(btn, startTime, totalTime) {
@@ -135,8 +114,8 @@ function startButtonUpdateInterval(btn, totalTime) {
             delete btn.dataset.intervalId;
             return;
         }
-        const { startTime } = await getStorageData();
-        if (startTime && !isNaN(new Date(startTime).getTime())) {
+        const { startTime } = await StorageService.getMultiple([STORAGE_KEYS.START_TIME]);
+        if (startTime && !Number.isNaN(new Date(startTime).getTime())) {
             updateButtonText(btn, startTime, totalTime);
         } else {
             btn.textContent = `${TimeService.formatTime(0, totalTime)} Start Timer`;

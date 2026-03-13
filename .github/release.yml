@@ -1,0 +1,14 @@
+changelog:
+  categories:
+    - title: "🚀 Features"
+      labels: [enhancement, feature]
+    - title: "🐛 Bug Fixes"
+      labels: [bug, fix]
+    - title: "🎨 Style & DX"
+      labels: [style, dx, refactor]
+    - title: "📦 Dependencies"
+      labels: [dependencies]
+    - title: "📝 Other Changes"
+      labels: ["*"]
+  exclude:
+    labels: [skip-changelog]
