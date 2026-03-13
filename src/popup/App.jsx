@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'preact/hooks';
-import { ActiveTimer } from '../components/ActiveTimer/ActiveTimer.jsx';
-import { IssuesTab } from './Views/IssuesTab/IssuesTab.jsx';
-import { StatsTab } from './Views/StatsTab/StatsTab.jsx';
-import { CalendarView } from './Views/TrackedList/CalendarView.jsx';
-import { Settings } from '../components/Settings/Settings.jsx';
-import { Modal } from '../components/Modal/Modal.jsx';
+import { ActiveTimer } from '../components/ActiveTimer.jsx';
+import { IssuesTab } from './views/IssuesTab.jsx';
+import { StatsTab } from './views/StatsTab.jsx';
+import { CalendarView } from './views/CalendarView.jsx';
+import { Settings } from '../components/Settings.jsx';
+import { Modal } from '../components/Modal.jsx';
 import { GitHubStorageService } from '../utils/github-storage.js';
 import { StorageService } from '../utils/storage.js';
 import { IssueStorageService } from '../utils/issue-storage.js';

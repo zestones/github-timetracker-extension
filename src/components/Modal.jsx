@@ -1,4 +1,4 @@
-import { IconX } from '../../icons.jsx';
+import { IconX } from '../icons.jsx';
 
 export function Modal({ title, message, confirmLabel = 'Confirm', confirmVariant = 'primary', onConfirm, onCancel }) {
     return (

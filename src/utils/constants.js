@@ -17,6 +17,7 @@ export const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 export const CACHE_REFRESH_INTERVAL = 15; // minutes, for chrome.alarms
 export const TIME_UPDATE_INTERVAL = 1000;
 export const DEBOUNCE_INJECT_MS = 500;
+export const DEBOUNCE_SEARCH_MS = 400;
 export const CONTAINER_CHECK_INTERVAL_MS = 500;
 export const CONTAINER_CHECK_MAX_ATTEMPTS = 10;
 export const USER_CACHE_TTL = 30 * 60 * 1000;

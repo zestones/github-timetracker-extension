@@ -2,18 +2,18 @@ import { TimeService } from './time.js';
 import { GitHubService } from './github.js';
 import { StorageService } from './storage.js';
 import { GitHubStorageService } from './github-storage.js';
-import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from './constants.js';
+import { STORAGE_KEYS } from './constants.js';
 import { IssueStorageService } from "./issue-storage.js";
 
 export class TimerService {
     static async getTotalTimeForIssue(issueUrl) {
-        const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
+        const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) ?? [];
         return trackedTimes
             .filter(entry => entry.issueUrl === issueUrl)
             .reduce((total, entry) => total + (entry.seconds || 0), 0);
     }
 
-    static async startTimer(issueUrl, buttonElement = null, issueTitle_param = null) {
+    static async startTimer(issueUrl, issueTitle = null) {
         try {
             const [activeIssueUrl, startTime, issue] = await Promise.all([
                 StorageService.get(STORAGE_KEYS.ACTIVE_ISSUE),
@@ -22,13 +22,13 @@ export class TimerService {
             ]);
 
             if (activeIssueUrl && startTime && activeIssueUrl !== issueUrl) {
-                await this.stopTimer(activeIssueUrl, buttonElement);
+                await this.stopTimer(activeIssueUrl);
             }
 
             const issueInfo = GitHubService.parseIssueUrl(issueUrl);
             const { owner, repo, issueNumber } = issueInfo;
-            const issueTitle = issueTitle_param || 'Untitled';
-            const fullIssueTitle = `(${owner}) ${repo} | ${issueTitle} | #${issueNumber}`;
+            const title = issueTitle || 'Untitled';
+            const fullIssueTitle = `(${owner}) ${repo} | ${title} | #${issueNumber}`;
 
             await Promise.all([
                 StorageService.set(STORAGE_KEYS.ACTIVE_ISSUE, issueUrl),
@@ -40,38 +40,18 @@ export class TimerService {
             }
 
             const totalTime = await this.getTotalTimeForIssue(issueUrl);
-            let intervalId = null;
-
-            if (buttonElement) {
-                buttonElement.textContent = `${TimeService.formatTime(0, totalTime)} ⏸ Stop`;
-                intervalId = window.setInterval(async () => {
-                    const startTime = await StorageService.get(STORAGE_KEYS.START_TIME);
-                    if (!startTime || isNaN(new Date(startTime).getTime())) {
-                        clearInterval(intervalId);
-                        buttonElement.textContent = `${TimeService.formatTime(0, totalTime)} Start Timer`;
-                        return;
-                    }
-                    buttonElement.textContent = `${TimeService.timeStringSince(startTime, totalTime)} ⏸ Stop`;
-                }, TIME_UPDATE_INTERVAL);
-                buttonElement.dataset.intervalId = intervalId.toString();
-            }
-
-            return { issueUrl, totalTime, intervalId, isRunning: true };
+            return { issueUrl, totalTime, isRunning: true };
         } catch (error) {
             console.error('Failed to start timer:', error);
-            if (buttonElement?.dataset.intervalId) {
-                clearInterval(parseInt(buttonElement.dataset.intervalId, 10));
-                buttonElement.textContent = 'Start Timer';
-            }
             await StorageService.removeMultiple([
                 STORAGE_KEYS.ACTIVE_ISSUE,
                 STORAGE_KEYS.START_TIME,
             ]);
-            return { issueUrl, totalTime: 0, intervalId: null, isRunning: false };
+            return { issueUrl, totalTime: 0, isRunning: false };
         }
     }
 
-    static async stopTimer(issueUrl, buttonElement = null) {
+    static async stopTimer(issueUrl) {
         try {
             const [startTime, githubToken, trackedTimes, existingIssue] = await Promise.all([
                 StorageService.get(STORAGE_KEYS.START_TIME),
@@ -82,7 +62,6 @@ export class TimerService {
 
             if (!startTime || isNaN(new Date(startTime).getTime())) {
                 console.error('Invalid startTime:', startTime);
-                this.resetButtonState(buttonElement);
                 await StorageService.removeMultiple([
                     STORAGE_KEYS.ACTIVE_ISSUE,
                     STORAGE_KEYS.START_TIME,
@@ -96,14 +75,13 @@ export class TimerService {
             const issueInfo = GitHubService.parseIssueUrl(issueUrl);
             const { owner, repo, issueNumber } = issueInfo;
 
-            const updatedTrackedTimes = [...(trackedTimes || []), {
+            const updatedTrackedTimes = [...(trackedTimes ?? []), {
                 issueUrl,
                 title: taskTitle,
                 seconds: timeSpentSeconds,
                 date: TimeService.getLocalDateString(),
             }];
 
-            // Update local storage and UI immediately
             await Promise.all([
                 StorageService.set(STORAGE_KEYS.TRACKED_TIMES, updatedTrackedTimes),
                 StorageService.removeMultiple([
@@ -113,7 +91,6 @@ export class TimerService {
             ]);
 
             const totalTime = await this.getTotalTimeForIssue(issueUrl);
-            this.resetButtonState(buttonElement, totalTime);
 
             // Sync to GitHub in the background (non-blocking)
             if (githubToken) {
@@ -123,7 +100,6 @@ export class TimerService {
             return { issueUrl, totalTime, isRunning: false };
         } catch (error) {
             console.error('Failed to stop timer:', error);
-            this.resetButtonState(buttonElement);
             return { issueUrl, totalTime: 0, isRunning: false };
         }
     }
@@ -135,7 +111,7 @@ export class TimerService {
                     .filter(e => e.issueUrl === issueUrl)
                     .map(e => ({ date: e.date, seconds: e.seconds }));
 
-                const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) || {};
+                const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) ?? {};
                 const username = await GitHubService.getCurrentUsername();
                 const commentKey = `${username}:${issueUrl}`;
                 const result = await GitHubService.createOrUpdateTrackerComment({
@@ -150,15 +126,5 @@ export class TimerService {
                 console.error('Background sync failed:', error);
             }
         })();
-    }
-
-    static resetButtonState(buttonElement, totalTime = 0) {
-        if (buttonElement?.dataset.intervalId) {
-            clearInterval(parseInt(buttonElement.dataset.intervalId, 10));
-            delete buttonElement.dataset.intervalId;
-        }
-        if (buttonElement) {
-            buttonElement.textContent = `${TimeService.formatTime(0, totalTime)} Start Timer`;
-        }
     }
 }

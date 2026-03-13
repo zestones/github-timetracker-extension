@@ -1,15 +1,15 @@
 import { useState, useEffect, useMemo } from 'preact/hooks';
-import { IssueRow } from '../../../components/IssueRow/IssueRow.jsx';
-import { PinRepoModal } from '../../../components/PinRepoModal/PinRepoModal.jsx';
-import { CacheService } from '../../../utils/cache.js';
-import { PinnedReposService } from '../../../utils/pinned-repos.js';
-import { GitHubService } from '../../../utils/github.js';
-import { TimerService } from '../../../utils/timer.js';
-import { IssueStorageService } from '../../../utils/issue-storage.js';
-import { StorageService } from '../../../utils/storage.js';
-import { STORAGE_KEYS } from '../../../utils/constants.js';
-import { useStorageListener } from '../../../hooks/useStorageListener.js';
-import { IconSearch, IconPlus, IconChevronDown, IconChevronRight, IconRefresh, IconX, IconPin } from '../../../icons.jsx';
+import { IssueRow } from '../../components/IssueRow.jsx';
+import { PinRepoModal } from '../../components/PinRepoModal.jsx';
+import { CacheService } from '../../utils/cache.js';
+import { PinnedReposService } from '../../utils/pinned-repos.js';
+import { GitHubService } from '../../utils/github.js';
+import { TimerService } from '../../utils/timer.js';
+import { IssueStorageService } from '../../utils/issue-storage.js';
+import { STORAGE_KEYS } from '../../utils/constants.js';
+import { useStorageListener } from '../../hooks/useStorageListener.js';
+import { useActiveTimer } from '../../hooks/useActiveTimer.js';
+import { IconSearch, IconPlus, IconChevronDown, IconChevronRight, IconRefresh, IconX, IconPin } from '../../icons.jsx';
 
 export function IssuesTab() {
     const [pinnedRepos, setPinnedRepos] = useState([]);
@@ -18,11 +18,11 @@ export function IssuesTab() {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState({});
     const [showPinModal, setShowPinModal] = useState(false);
-    const [activeIssue, setActiveIssue] = useState(null);
     const [filter, setFilter] = useState('open');
     const [currentUser, setCurrentUser] = useState(null);
 
     const tracked = useStorageListener(STORAGE_KEYS.TRACKED_TIMES, []);
+    const { activeIssue } = useActiveTimer();
 
     useEffect(() => {
         const load = async () => {
@@ -56,22 +56,6 @@ export function IssuesTab() {
             }
         };
         load();
-    }, []);
-
-    useEffect(() => {
-        const load = async () => {
-            const active = await StorageService.get(STORAGE_KEYS.ACTIVE_ISSUE);
-            setActiveIssue(active);
-        };
-        load();
-
-        const listener = (changes, area) => {
-            if (area === 'local' && changes[STORAGE_KEYS.ACTIVE_ISSUE]) {
-                setActiveIssue(changes[STORAGE_KEYS.ACTIVE_ISSUE].newValue || null);
-            }
-        };
-        chrome.storage.onChanged.addListener(listener);
-        return () => chrome.storage.onChanged.removeListener(listener);
     }, []);
 
     const refreshRepoIssues = async (repo) => {

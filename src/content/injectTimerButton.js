@@ -65,10 +65,10 @@ export async function injectTimerButton() {
     btn.addEventListener('click', async () => {
         const { activeIssue, startTime } = await StorageService.getMultiple([STORAGE_KEYS.ACTIVE_ISSUE, STORAGE_KEYS.START_TIME]);
         if (activeIssue === location.pathname && startTime && !isNaN(new Date(startTime).getTime())) {
-            await TimerService.stopTimer(location.pathname, btn);
+            await TimerService.stopTimer(location.pathname);
         } else {
             const title = getIssueTitle();
-            await TimerService.startTimer(location.pathname, btn, title);
+            await TimerService.startTimer(location.pathname, title);
         }
         await updateButton();
     });

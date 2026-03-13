@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { GitHubService } from '../../utils/github.js';
-import { IconX, IconSearch, IconCheck, IconPin } from '../../icons.jsx';
+import { GitHubService } from '../utils/github.js';
+import { DEBOUNCE_SEARCH_MS } from '../utils/constants.js';
+import { IconX, IconSearch, IconCheck, IconPin } from '../icons.jsx';
 
 export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
     const [query, setQuery] = useState('');
@@ -40,7 +41,7 @@ export function PinRepoModal({ onClose, onPin, pinnedRepos }) {
                 console.error('Search failed:', error);
             }
             setSearching(false);
-        }, 400);
+        }, DEBOUNCE_SEARCH_MS);
     };
 
     const isPinned = (fullName) => pinnedRepos.some((r) => r.fullName === fullName);

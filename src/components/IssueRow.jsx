@@ -1,5 +1,5 @@
-import { TimeService } from '../../utils/time.js';
-import { IconPlay, IconStop, IconExternalLink } from '../../icons.jsx';
+import { TimeService } from '../utils/time.js';
+import { IconPlay, IconStop, IconExternalLink } from '../icons.jsx';
 
 export function IssueRow({ issue, isActive, onStart, onStop, trackedSeconds = 0 }) {
     const isClosed = issue.state === 'closed';

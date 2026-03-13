@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'preact/hooks';
-import { TimerService } from '../../../utils/timer.js';
-import { TimeService } from '../../../utils/time.js';
-import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../../../utils/constants.js';
-import { useActiveTimer } from '../../../hooks/useActiveTimer.js';
-import { IconPlay, IconStop, IconExternalLink } from '../../../icons.jsx';
+import { TimerService } from '../../utils/timer.js';
+import { TimeService } from '../../utils/time.js';
+import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../../utils/constants.js';
+import { useActiveTimer } from '../../hooks/useActiveTimer.js';
+import { IconPlay, IconStop, IconExternalLink } from '../../icons.jsx';
 
 export function TrackedList({ entries, showTimerControls = false }) {
     const { activeIssue, startTime, isActive: isTimerActive } = useActiveTimer();
@@ -57,7 +57,7 @@ export function TrackedList({ entries, showTimerControls = false }) {
 
     const handleTimerClick = async (entry) => {
         if (entry.issueUrl === activeIssue && startTime && !isNaN(new Date(startTime).getTime())) {
-            await TimerService.stopTimer(entry.issueUrl, null, entry.title);
+            await TimerService.stopTimer(entry.issueUrl);
             setCurrentTimes((prev) => {
                 const newTimes = { ...prev };
                 delete newTimes[entry.issueUrl];

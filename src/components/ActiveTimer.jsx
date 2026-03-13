@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'preact/hooks';
-import { TimeService } from '../../utils/time.js';
-import { TimerService } from '../../utils/timer.js';
-import { IssueStorageService } from '../../utils/issue-storage.js';
-import { GitHubService } from '../../utils/github.js';
-import { AggregationService } from '../../utils/aggregation.js';
-import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../../utils/constants.js';
-import { useActiveTimer } from '../../hooks/useActiveTimer.js';
-import { IconStop } from '../../icons.jsx';
+import { TimeService } from '../utils/time.js';
+import { TimerService } from '../utils/timer.js';
+import { IssueStorageService } from '../utils/issue-storage.js';
+import { GitHubService } from '../utils/github.js';
+import { AggregationService } from '../utils/aggregation.js';
+import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../utils/constants.js';
+import { useActiveTimer } from '../hooks/useActiveTimer.js';
+import { IconStop } from '../icons.jsx';
 
 export function ActiveTimer() {
     const { activeIssue, startTime, stop } = useActiveTimer();

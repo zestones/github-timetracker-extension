@@ -1,13 +1,13 @@
 import { useMemo, useState, useCallback, useEffect } from 'preact/hooks';
-import { TimeService } from '../../../utils/time.js';
-import { AggregationService } from '../../../utils/aggregation.js';
-import { GitHubService } from '../../../utils/github.js';
-import { PinnedReposService } from '../../../utils/pinned-repos.js';
-import { IssueStorageService } from '../../../utils/issue-storage.js';
-import { StorageService } from '../../../utils/storage.js';
-import { STORAGE_KEYS } from '../../../utils/constants.js';
+import { TimeService } from '../../utils/time.js';
+import { AggregationService } from '../../utils/aggregation.js';
+import { GitHubService } from '../../utils/github.js';
+import { PinnedReposService } from '../../utils/pinned-repos.js';
+import { IssueStorageService } from '../../utils/issue-storage.js';
+import { StorageService } from '../../utils/storage.js';
+import { STORAGE_KEYS } from '../../utils/constants.js';
 import { RepoDetailView } from './RepoDetailView.jsx';
-import { IconCalendar, IconX, IconChevronRight, IconUser, IconUsers, IconRefresh } from '../../../icons.jsx';
+import { IconCalendar, IconX, IconChevronRight, IconUser, IconUsers, IconRefresh } from '../../icons.jsx';
 
 export function StatsTab({ tracked, user }) {
     const [rangeMode, setRangeMode] = useState('today');
@@ -89,7 +89,7 @@ export function StatsTab({ tracked, user }) {
             // Merge current user's remote entries into local storage
             if (username) {
                 const remoteMe = flatEntries.filter(e => e.user === username);
-                const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
+                const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) ?? [];
                 const localKeys = new Set(trackedTimes.map(e => `${e.issueUrl}|${e.date}`));
                 const newEntries = remoteMe.filter(e => !localKeys.has(`${e.issueUrl}|${e.date}`));
                 if (newEntries.length > 0) {

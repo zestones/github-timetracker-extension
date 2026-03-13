@@ -34,8 +34,8 @@ export async function syncFromGitHub() {
         }
     }
 
-    const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
-    const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) || {};
+    const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) ?? [];
+    const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) ?? {};
     const username = await GitHubService.getCurrentUsername();
     let importedCount = 0;
 

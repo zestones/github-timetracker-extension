@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'preact/hooks';
-import { TimeService } from '../../../utils/time.js';
-import { IconChevronLeft, IconChevronDown, IconChevronRight, IconExternalLink } from '../../../icons.jsx';
+import { TimeService } from '../../utils/time.js';
+import { IconChevronLeft, IconChevronDown, IconChevronRight, IconExternalLink } from '../../icons.jsx';
 
 const SORT_OPTIONS = [
     { key: 'time', label: 'Time' },
@@ -130,8 +130,8 @@ export function RepoDetailView({ repo, repoDetails, userMode, onBack }) {
                                 key={opt.key}
                                 onClick={() => handleSort(opt.key)}
                                 className={`text-[10px] px-2 py-1 rounded-md cursor-pointer transition-colors font-medium ${isActive
-                                        ? 'bg-accent-subtle text-accent'
-                                        : 'text-tertiary hover:bg-raised hover:text-secondary'
+                                    ? 'bg-accent-subtle text-accent'
+                                    : 'text-tertiary hover:bg-raised hover:text-secondary'
                                     }`}
                             >
                                 {opt.label}{arrow && ` ${arrow}`}

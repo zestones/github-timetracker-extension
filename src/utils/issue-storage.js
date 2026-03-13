@@ -5,7 +5,7 @@ const STORAGE_KEY = STORAGE_KEYS.ISSUES;
 
 export class IssueStorageService {
     static async getAll() {
-        return (await StorageService.get(STORAGE_KEY)) || [];
+        return (await StorageService.get(STORAGE_KEY)) ?? [];
     }
 
     static async add(issue) {

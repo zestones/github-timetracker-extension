@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'preact/hooks';
-import { GitHubStorageService } from '../../utils/github-storage.js';
-import { GitHubService } from '../../utils/github.js';
-import { StorageService } from '../../utils/storage.js';
-import { IssueStorageService } from '../../utils/issue-storage.js';
-import { STORAGE_KEYS } from '../../utils/constants.js';
-import { syncFromGitHub } from '../../utils/sync.js';
-import { IconDownload, IconTrash, IconSun, IconMoon, IconMonitor, IconRefresh } from '../../icons.jsx';
+import { GitHubStorageService } from '../utils/github-storage.js';
+import { GitHubService } from '../utils/github.js';
+import { StorageService } from '../utils/storage.js';
+import { IssueStorageService } from '../utils/issue-storage.js';
+import { STORAGE_KEYS } from '../utils/constants.js';
+import { syncFromGitHub } from '../utils/sync.js';
+import { IconDownload, IconTrash, IconSun, IconMoon, IconMonitor, IconRefresh } from '../icons.jsx';
 
 function downloadFile(content, filename, mimeType) {
     const blob = new Blob([content], { type: mimeType });
@@ -58,7 +58,7 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
     const handleSync = async () => {
         setSyncStatus('syncing');
         try {
-            const { PinnedReposService } = await import('../../utils/pinned-repos.js');
+            const { PinnedReposService } = await import('../utils/pinned-repos.js');
             const repos = await PinnedReposService.getPinnedRepos();
             if (repos.length === 0) {
                 setSyncStatus('no-repos');
@@ -200,7 +200,7 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
                 <div className="flex gap-2">
                     <button
                         onClick={async () => {
-                            const tracked = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
+                            const tracked = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) ?? [];
                             exportCSV(tracked);
                         }}
                         className="flex-1 flex items-center justify-center gap-1.5 bg-surface hover:bg-raised text-secondary text-[13px] font-medium py-2.5 rounded-xl cursor-pointer transition-colors border border-border-default"
@@ -210,7 +210,7 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
                     </button>
                     <button
                         onClick={async () => {
-                            const tracked = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
+                            const tracked = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) ?? [];
                             exportJSON(tracked);
                         }}
                         className="flex-1 flex items-center justify-center gap-1.5 bg-surface hover:bg-raised text-secondary text-[13px] font-medium py-2.5 rounded-xl cursor-pointer transition-colors border border-border-default"

@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect, useRef } from 'preact/hooks';
-import { TimeService } from '../../../utils/time.js';
+import { TimeService } from '../../utils/time.js';
 import { TrackedList } from './TrackedList.jsx';
-import { TimerService } from '../../../utils/timer.js';
-import { STORAGE_KEYS } from '../../../utils/constants.js';
-import { useActiveTimer } from '../../../hooks/useActiveTimer.js';
-import { IconChevronLeft, IconChevronRight, IconSearch, IconClock } from '../../../icons.jsx';
+import { TimerService } from '../../utils/timer.js';
+import { STORAGE_KEYS } from '../../utils/constants.js';
+import { useActiveTimer } from '../../hooks/useActiveTimer.js';
+import { IconChevronLeft, IconChevronRight, IconSearch, IconClock } from '../../icons.jsx';
 
 export function CalendarView({ tracked }) {
   const getLocalDate = () => {
