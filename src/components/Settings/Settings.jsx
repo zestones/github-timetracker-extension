@@ -41,10 +41,16 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
     const [tokenStatus, setTokenStatus] = useState(null);
     const [syncStatus, setSyncStatus] = useState(null);
     const [autoSync, setAutoSync] = useState(false);
+    const [rateLimit, setRateLimit] = useState(null);
 
     useEffect(() => {
         StorageService.get(STORAGE_KEYS.AUTO_SYNC).then(v => setAutoSync(!!v));
-    }, []);
+        if (token) {
+            GitHubService.getRateLimit()
+                .then(setRateLimit)
+                .catch(() => setRateLimit(null));
+        }
+    }, [token]);
 
     const toggleAutoSync = async () => {
         const newValue = !autoSync;
@@ -179,6 +185,16 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
                             <div className="text-[13px] font-medium text-primary">{user?.login || 'Unknown'}</div>
                             <div className="text-[11px] text-muted font-mono truncate">{maskedToken}</div>
                         </div>
+                        {rateLimit && (
+                            <div className="text-right shrink-0">
+                                <div className="text-[11px] font-mono tabular-nums text-secondary">
+                                    {rateLimit.remaining}<span className="text-muted">/{rateLimit.limit}</span>
+                                </div>
+                                <div className="text-[10px] text-muted">
+                                    resets {rateLimit.resetAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {!isEditing ? (

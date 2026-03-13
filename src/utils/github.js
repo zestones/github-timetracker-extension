@@ -41,6 +41,12 @@ export class GitHubService {
         return this.apiRequest('/user');
     }
 
+    static async getRateLimit() {
+        const data = await this.apiRequest('/rate_limit');
+        const { limit, remaining, reset } = data.rate;
+        return { limit, remaining, resetAt: new Date(reset * 1000) };
+    }
+
     // --- Tracker comment methods ---
 
     static formatDurationHuman(totalSeconds) {
