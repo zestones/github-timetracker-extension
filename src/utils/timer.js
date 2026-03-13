@@ -24,7 +24,7 @@ export class TimerService {
      * @param {HTMLButtonElement | null} buttonElement - Кнопка, связанная с таймером (необязательно)
      * @returns {Promise<{ issueUrl: string; totalTime: number; intervalId: number | null; isRunning: boolean; }>} Объект с информацией о задаче и статусе таймера
      */
-    static async startTimer(issueUrl, buttonElement = null) {
+    static async startTimer(issueUrl, buttonElement = null, issueTitle_param = null) {
         try {
             const [activeIssueUrl, startTime, issue] = await Promise.all([
                 StorageService.get(STORAGE_KEYS.ACTIVE_ISSUE),
@@ -39,7 +39,7 @@ export class TimerService {
 
             const issueInfo = GitHubService.parseIssueUrl(issueUrl);
             const { owner, repo, issueNumber } = issueInfo;
-            const issueTitle = this.getIssueTitle() || 'Untitled';
+            const issueTitle = issueTitle_param || 'Untitled';
             const fullIssueTitle = `(${owner}) ${repo} | ${issueTitle} | #${issueNumber}`;
 
             await Promise.all([
@@ -84,18 +84,6 @@ export class TimerService {
     }
 
     /**
-     * Форматирует текущую локальную дату в формате YYYY-MM-DD
-     * @returns {string} Дата в формате YYYY-MM-DD
-     */
-    static getLocalDateString() {
-        const date = new Date();
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Месяцы начинаются с 0
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    /**
      * Останавливает таймер для указанного URL задачи
      * @param {string} issueUrl - URL задачи
      * @param {HTMLButtonElement | null} buttonElement - Кнопка, связанная с таймером (необязательно)
@@ -130,7 +118,7 @@ export class TimerService {
                 issueUrl,
                 title: taskTitle,
                 seconds: timeSpentSeconds,
-                date: this.getLocalDateString(),
+                date: TimeService.getLocalDateString(),
             }];
 
             // Update local storage and UI immediately
@@ -156,17 +144,6 @@ export class TimerService {
             this.resetButtonState(buttonElement);
             return { issueUrl, totalTime: 0, isRunning: false };
         }
-    }
-
-    /**
-     * Получает заголовок задачи с текущей страницы
-     * @returns {string | null} Заголовок задачи или null, если не найден
-     */
-    static getIssueTitle() {
-        return (
-            document.querySelector('span.js-issue-title')?.textContent?.trim() ||
-            document.querySelector("[data-testid='issue-title']")?.textContent?.trim()
-        ) || null;
     }
 
     static syncCommentInBackground(issueUrl, owner, repo, issueNumber, trackedTimes) {

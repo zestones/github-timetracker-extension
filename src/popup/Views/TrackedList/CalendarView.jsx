@@ -2,8 +2,8 @@ import { useState, useMemo, useEffect, useRef } from 'preact/hooks';
 import { TimeService } from '../../../utils/time.js';
 import { TrackedList } from './TrackedList.jsx';
 import { TimerService } from '../../../utils/timer.js';
-import { StorageService } from '../../../utils/storage.js';
 import { STORAGE_KEYS } from '../../../utils/constants.js';
+import { useActiveTimer } from '../../../hooks/useActiveTimer.js';
 import { IconChevronLeft, IconChevronRight, IconSearch, IconClock } from '../../../icons.jsx';
 
 export function CalendarView({ tracked }) {
@@ -15,43 +15,9 @@ export function CalendarView({ tracked }) {
 
   const [currentDate, setCurrentDate] = useState(getLocalDate());
   const [selectedDate, setSelectedDate] = useState(getLocalDate());
-  const [activeIssue, setActiveIssue] = useState(null);
-  const [startTime, setStartTime] = useState(null);
+  const { activeIssue, startTime } = useActiveTimer();
   const [currentTimes, setCurrentTimes] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
-
-  useEffect(() => {
-    const loadActiveData = async () => {
-      const [active, start] = await Promise.all([
-        StorageService.get(STORAGE_KEYS.ACTIVE_ISSUE),
-        StorageService.get(STORAGE_KEYS.START_TIME),
-      ]);
-      setActiveIssue(active);
-      setStartTime(start);
-
-      if (active && start && !isNaN(new Date(start).getTime())) {
-        const totalTime = await TimerService.getTotalTimeForIssue(active);
-        const elapsed = (Date.now() - new Date(start).getTime()) / 1000;
-        setCurrentTimes((prev) => ({
-          ...prev,
-          [active]: TimeService.formatTime(elapsed + totalTime),
-        }));
-      }
-    };
-    loadActiveData();
-
-    const listener = (changes, area) => {
-      if (area !== 'local') return;
-      if (changes[STORAGE_KEYS.ACTIVE_ISSUE]) {
-        setActiveIssue(changes[STORAGE_KEYS.ACTIVE_ISSUE].newValue);
-      }
-      if (changes[STORAGE_KEYS.START_TIME]) {
-        setStartTime(changes[STORAGE_KEYS.START_TIME].newValue);
-      }
-    };
-    chrome.storage.onChanged.addListener(listener);
-    return () => chrome.storage.onChanged.removeListener(listener);
-  }, []);
 
   const intervalRef = useRef(null);
 

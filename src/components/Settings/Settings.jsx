@@ -8,6 +8,16 @@ import { STORAGE_KEYS } from '../../utils/constants.js';
 import { syncFromGitHub } from '../../utils/sync.js';
 import { IconDownload, IconTrash, IconSun, IconMoon, IconMonitor, IconRefresh } from '../../icons.jsx';
 
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
 function exportCSV(tracked) {
     const header = 'Issue URL,Title,Seconds,Date\n';
     const rows = tracked.map((e) => {
@@ -15,25 +25,12 @@ function exportCSV(tracked) {
         const title = (e.title || '').replace(/"/g, '""');
         return `"${url}","${title}",${e.seconds},"${e.date}"`;
     }).join('\n');
-    const csv = header + rows;
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `timetracker-export-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadFile(header + rows, `timetracker-export-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv');
 }
 
 function exportJSON(tracked) {
     const json = JSON.stringify(tracked, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `timetracker-export-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadFile(json, `timetracker-export-${new Date().toISOString().slice(0, 10)}.json`, 'application/json');
 }
 
 export function Settings({ token, maskedToken, user, onTokenChange, onClearData, theme, onThemeChange }) {

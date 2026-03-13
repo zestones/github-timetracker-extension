@@ -1,11 +1,12 @@
-// background/content.js
+// content/index.js
 import { injectTimerButton, resetInjectedFlag } from './injectTimerButton.js';
+import { isIssuePage } from './helpers.js';
 import { StorageService } from '../utils/storage.js';
 import { STORAGE_KEYS } from '../utils/constants.js';
 
 console.log('content script loaded, timestamp:', Date.now());
 
-// Дебаунсинг для предотвращения множественных вызовов
+// Debounce to prevent multiple calls
 function debounce(fn, delay) {
     let timeoutId;
     return (...args) => {
@@ -14,12 +15,7 @@ function debounce(fn, delay) {
     };
 }
 
-// Проверка, является ли страница Issue
-function isIssuePage() {
-    return location.pathname.match(/^\/[^/]+\/[^/]+\/issues\/\d+$/);
-}
-
-// Дебаунсинг для injectTimerButton
+// Debounced injectTimerButton
 const debouncedInjectTimerButton = debounce(injectTimerButton, 500);
 
 // Рекурсивная проверка контейнера

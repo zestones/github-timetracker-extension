@@ -1,6 +1,7 @@
 import { GITHUB_API_URL, TRACKER_PAYLOAD_PREFIX, buildTrackerMarker, matchesTrackerMarker } from './constants.js';
 import { CacheService } from './cache.js';
 import { GitHubStorageService } from "./github-storage.js";
+import { TimeService } from './time.js';
 
 export class GitHubService {
     static parseIssueUrl(url) {
@@ -12,6 +13,18 @@ export class GitHubService {
             repo: match[2],
             issueNumber: parseInt(match[3], 10),
             fullRepo: `${match[1]}/${match[2]}`
+        };
+    }
+
+    static simplifyIssue(apiIssue, repoFullName) {
+        return {
+            number: apiIssue.number,
+            title: apiIssue.title,
+            issueUrl: `/${repoFullName}/issues/${apiIssue.number}`,
+            state: apiIssue.state,
+            labels: (apiIssue.labels || []).map((l) => l.name),
+            assignees: (apiIssue.assignees || []).map((a) => a.login),
+            user: apiIssue.user?.login || '',
         };
     }
 
@@ -49,18 +62,6 @@ export class GitHubService {
 
     // --- Tracker comment methods ---
 
-    static formatDurationHuman(totalSeconds) {
-        totalSeconds = Math.floor(totalSeconds);
-        const h = Math.floor(totalSeconds / 3600);
-        const m = Math.floor((totalSeconds % 3600) / 60);
-        const s = totalSeconds % 60;
-        const parts = [];
-        if (h > 0) parts.push(`${h}h`);
-        if (m > 0) parts.push(`${m}min`);
-        if (s > 0 || parts.length === 0) parts.push(`${s}s`);
-        return parts.join(' ');
-    }
-
     static async getCurrentUsername() {
         const cached = await CacheService.getCachedUser();
         if (cached?.login) return cached.login;
@@ -77,12 +78,12 @@ export class GitHubService {
         const marker = buildTrackerMarker(username);
 
         let body = `${marker}\n`;
-        body += `⏱️ **Total tracked time: ${this.formatDurationHuman(totalSeconds)}**\n\n`;
+        body += `⏱️ **Total tracked time: ${TimeService.formatHuman(totalSeconds)}**\n\n`;
 
         if (sorted.length > 0) {
             body += `| # | Date | Duration |\n|---|------|----------|\n`;
             sorted.forEach((e, i) => {
-                body += `| ${i + 1} | ${e.date} | ${this.formatDurationHuman(e.seconds)} |\n`;
+                body += `| ${i + 1} | ${e.date} | ${TimeService.formatHuman(e.seconds)} |\n`;
             });
             body += '\n';
         }

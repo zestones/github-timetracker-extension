@@ -1,46 +1,24 @@
 import { useEffect, useState, useRef } from 'preact/hooks';
 import { TimerService } from '../../../utils/timer.js';
 import { TimeService } from '../../../utils/time.js';
-import { StorageService } from '../../../utils/storage.js';
 import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../../../utils/constants.js';
+import { useActiveTimer } from '../../../hooks/useActiveTimer.js';
 import { IconPlay, IconStop, IconExternalLink } from '../../../icons.jsx';
 
 export function TrackedList({ entries, showTimerControls = false }) {
-    const [activeIssue, setActiveIssue] = useState(null);
-    const [startTime, setStartTime] = useState(null);
+    const { activeIssue, startTime, isActive: isTimerActive } = useActiveTimer();
     const [currentTimes, setCurrentTimes] = useState({});
 
+    // Initialize elapsed time on mount
     useEffect(() => {
-        const loadActiveData = async () => {
-            const [active, start] = await Promise.all([
-                StorageService.get(STORAGE_KEYS.ACTIVE_ISSUE),
-                StorageService.get(STORAGE_KEYS.START_TIME),
-            ]);
-            setActiveIssue(active);
-            setStartTime(start);
-
-            if (active && start && !isNaN(new Date(start).getTime())) {
-                const elapsed = (Date.now() - new Date(start).getTime()) / 1000;
-                setCurrentTimes((prev) => ({
-                    ...prev,
-                    [active]: TimeService.formatTime(elapsed),
-                }));
-            }
-        };
-        loadActiveData();
-
-        const listener = (changes, area) => {
-            if (area !== 'local') return;
-            if (changes[STORAGE_KEYS.ACTIVE_ISSUE]) {
-                setActiveIssue(changes[STORAGE_KEYS.ACTIVE_ISSUE].newValue);
-            }
-            if (changes[STORAGE_KEYS.START_TIME]) {
-                setStartTime(changes[STORAGE_KEYS.START_TIME].newValue);
-            }
-        };
-        chrome.storage.onChanged.addListener(listener);
-        return () => chrome.storage.onChanged.removeListener(listener);
-    }, []);
+        if (activeIssue && startTime && !isNaN(new Date(startTime).getTime())) {
+            const elapsed = (Date.now() - new Date(startTime).getTime()) / 1000;
+            setCurrentTimes((prev) => ({
+                ...prev,
+                [activeIssue]: TimeService.formatTime(elapsed),
+            }));
+        }
+    }, [activeIssue, startTime]);
 
     const intervalRef = useRef(null);
 
@@ -92,8 +70,7 @@ export function TrackedList({ entries, showTimerControls = false }) {
         }
     };
 
-    const isActive = (entry) =>
-        entry.issueUrl === activeIssue && startTime && !isNaN(new Date(startTime).getTime());
+    const isActive = (entry) => isTimerActive(entry.issueUrl);
 
     return (
         <div className="space-y-1">

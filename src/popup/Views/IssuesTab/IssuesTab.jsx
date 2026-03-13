@@ -78,15 +78,7 @@ export function IssuesTab() {
         try {
             const [owner, repoName] = repo.fullName.split('/');
             const issues = await GitHubService.getRepoIssues(owner, repoName);
-            const simplified = issues.map((i) => ({
-                number: i.number,
-                title: i.title,
-                issueUrl: `/${repo.fullName}/issues/${i.number}`,
-                state: i.state,
-                labels: (i.labels || []).map((l) => l.name),
-                assignees: (i.assignees || []).map((a) => a.login),
-                user: i.user?.login || '',
-            }));
+            const simplified = issues.map((i) => GitHubService.simplifyIssue(i, repo.fullName));
             await CacheService.setCachedIssues(repo.fullName, simplified);
             setRepoIssues((prev) => ({ ...prev, [repo.fullName]: simplified }));
         } catch (error) {

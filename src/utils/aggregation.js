@@ -36,6 +36,12 @@ export class AggregationService {
         return { issueTitle: title, issueNumber: '' };
     }
 
+    static extractCleanTitle(storedTitle) {
+        if (!storedTitle) return 'Untitled';
+        const { issueTitle, issueNumber } = this.parseEntryTitle(storedTitle);
+        return issueTitle || issueNumber || storedTitle;
+    }
+
     static getRepoBreakdownDetailed(entries) {
         const repoMap = {};
         for (const entry of entries) {
@@ -61,13 +67,6 @@ export class AggregationService {
         return repoMap;
     }
 
-    static getLocalDateString(date = new Date()) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
     static filterByDateRange(trackedTimes, startDate, endDate) {
         return trackedTimes.filter((e) => e.date >= startDate && e.date <= endDate);
     }
@@ -77,7 +76,7 @@ export class AggregationService {
     }
 
     static getTodayEntries(trackedTimes) {
-        const today = this.getLocalDateString();
+        const today = TimeService.getLocalDateString();
         return trackedTimes.filter((e) => e.date === today);
     }
 
@@ -86,16 +85,16 @@ export class AggregationService {
         const dayOfWeek = now.getDay();
         const startOfWeek = new Date(now);
         startOfWeek.setDate(now.getDate() - dayOfWeek);
-        const start = this.getLocalDateString(startOfWeek);
-        const end = this.getLocalDateString(now);
+        const start = TimeService.getLocalDateString(startOfWeek);
+        const end = TimeService.getLocalDateString(now);
         return this.filterByDateRange(trackedTimes, start, end);
     }
 
     static getMonthEntries(trackedTimes) {
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const start = this.getLocalDateString(startOfMonth);
-        const end = this.getLocalDateString(now);
+        const start = TimeService.getLocalDateString(startOfMonth);
+        const end = TimeService.getLocalDateString(now);
         return this.filterByDateRange(trackedTimes, start, end);
     }
 }

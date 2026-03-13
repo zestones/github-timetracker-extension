@@ -1,83 +1,42 @@
 import { useState, useEffect } from 'preact/hooks';
 import { TimeService } from '../../utils/time.js';
 import { TimerService } from '../../utils/timer.js';
-import { StorageService } from '../../utils/storage.js';
 import { IssueStorageService } from '../../utils/issue-storage.js';
 import { GitHubService } from '../../utils/github.js';
+import { AggregationService } from '../../utils/aggregation.js';
 import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../../utils/constants.js';
+import { useActiveTimer } from '../../hooks/useActiveTimer.js';
 import { IconStop } from '../../icons.jsx';
 
-function extractCleanTitle(storedTitle) {
-    if (!storedTitle) return 'Untitled';
-    const parts = storedTitle.split(' | ');
-    if (parts.length >= 3) return parts.slice(1, -1).join(' | ');
-    if (parts.length === 2) return parts[1];
-    return storedTitle;
-}
-
 export function ActiveTimer() {
-    const [activeIssue, setActiveIssue] = useState(null);
-    const [startTime, setStartTime] = useState(null);
+    const { activeIssue, startTime, stop } = useActiveTimer();
     const [issueInfo, setIssueInfo] = useState(null);
     const [elapsed, setElapsed] = useState('00:00:00');
     const [totalTime, setTotalTime] = useState(0);
 
     useEffect(() => {
-        const load = async () => {
-            const [active, start] = await Promise.all([
-                StorageService.get(STORAGE_KEYS.ACTIVE_ISSUE),
-                StorageService.get(STORAGE_KEYS.START_TIME),
-            ]);
-            setActiveIssue(active);
-            setStartTime(start);
+        if (!activeIssue) {
+            setIssueInfo(null);
+            setTotalTime(0);
+            return;
+        }
 
-            if (active) {
-                const issue = await IssueStorageService.getByUrl(active);
-                try {
-                    const parsed = GitHubService.parseIssueUrl(active);
-                    setIssueInfo({
-                        ...parsed,
-                        title: extractCleanTitle(issue?.title),
-                    });
-                } catch (e) {
-                    setIssueInfo({ fullRepo: 'unknown', issueNumber: 0, title: issue?.title || 'Untitled' });
-                }
-                const total = await TimerService.getTotalTimeForIssue(active);
-                setTotalTime(total);
+        const loadInfo = async () => {
+            const issue = await IssueStorageService.getByUrl(activeIssue);
+            try {
+                const parsed = GitHubService.parseIssueUrl(activeIssue);
+                setIssueInfo({
+                    ...parsed,
+                    title: AggregationService.extractCleanTitle(issue?.title),
+                });
+            } catch (e) {
+                setIssueInfo({ fullRepo: 'unknown', issueNumber: 0, title: issue?.title || 'Untitled' });
             }
+            const total = await TimerService.getTotalTimeForIssue(activeIssue);
+            setTotalTime(total);
         };
-        load();
-
-        const listener = (changes, area) => {
-            if (area !== 'local') return;
-            if (changes[STORAGE_KEYS.ACTIVE_ISSUE]) {
-                const newActive = changes[STORAGE_KEYS.ACTIVE_ISSUE].newValue;
-                setActiveIssue(newActive || null);
-                if (newActive) {
-                    IssueStorageService.getByUrl(newActive).then((issue) => {
-                        try {
-                            const parsed = GitHubService.parseIssueUrl(newActive);
-                            setIssueInfo({
-                                ...parsed,
-                                title: extractCleanTitle(issue?.title),
-                            });
-                        } catch (e) {
-                            setIssueInfo({ fullRepo: 'unknown', issueNumber: 0, title: issue?.title || 'Untitled' });
-                        }
-                    });
-                    TimerService.getTotalTimeForIssue(newActive).then(setTotalTime);
-                } else {
-                    setIssueInfo(null);
-                    setTotalTime(0);
-                }
-            }
-            if (changes[STORAGE_KEYS.START_TIME]) {
-                setStartTime(changes[STORAGE_KEYS.START_TIME].newValue || null);
-            }
-        };
-        chrome.storage.onChanged.addListener(listener);
-        return () => chrome.storage.onChanged.removeListener(listener);
-    }, []);
+        loadInfo();
+    }, [activeIssue]);
 
     useEffect(() => {
         if (!activeIssue || !startTime) {
@@ -96,8 +55,7 @@ export function ActiveTimer() {
 
     const handleStop = async () => {
         if (!activeIssue) return;
-        await TimerService.stopTimer(activeIssue);
-        chrome.runtime.sendMessage({ action: 'timerStopped', issueUrl: activeIssue });
+        await stop();
     };
 
     if (!activeIssue || !startTime) return null;

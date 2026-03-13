@@ -1,8 +1,10 @@
 // content/injectTimerButton.js
 import { TimerService } from '../utils/timer.js';
 import { TimeService } from '../utils/time.js';
+import { StorageService } from '../utils/storage.js';
 import { addStorageListener } from '../utils/storage-listener.js';
 import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../utils/constants.js';
+import { isIssuePage, getIssueTitle } from './helpers.js';
 
 console.log('injectTimerButton module loaded, timestamp:', Date.now());
 
@@ -43,11 +45,9 @@ export async function injectTimerButton() {
 
     const updateButton = async () => {
         if (!document.querySelector('#track-time-btn')) {
-            console.log('updateButton: button not found, skipping update');
             return;
         }
-        console.log('updateButton: fetching storage data');
-        const { activeIssue, startTime } = await getStorageData();
+        const { activeIssue, startTime } = await StorageService.getMultiple([STORAGE_KEYS.ACTIVE_ISSUE, STORAGE_KEYS.START_TIME]);
         const totalTime = await TimerService.getTotalTimeForIssue(location.pathname) || 0;
         if (activeIssue === location.pathname && startTime && !isNaN(new Date(startTime).getTime())) {
             updateButtonText(btn, startTime, totalTime);
@@ -70,27 +70,25 @@ export async function injectTimerButton() {
     // Инициализация кнопки
     await updateButton();
 
-    // Слушатель кликов
+    // Click listener
     btn.addEventListener('click', async () => {
-        console.log('track-time-btn clicked');
-        const { activeIssue, startTime } = await getStorageData();
+        const { activeIssue, startTime } = await StorageService.getMultiple([STORAGE_KEYS.ACTIVE_ISSUE, STORAGE_KEYS.START_TIME]);
         if (activeIssue === location.pathname && startTime && !isNaN(new Date(startTime).getTime())) {
             await TimerService.stopTimer(location.pathname, btn);
         } else {
-            await TimerService.startTimer(location.pathname, btn);
+            const title = getIssueTitle();
+            await TimerService.startTimer(location.pathname, btn, title);
         }
-        await updateButton(); // Обновляем кнопку после клика
+        await updateButton();
     });
 
-    // Слушатель изменений trackedTimes
+    // Listen for trackedTimes changes
     const removeListener = addStorageListener(STORAGE_KEYS.TRACKED_TIMES, () => {
-        console.log('storageListener: trackedTimes changed');
         updateButton();
     });
 
-    // Очистка при выходе
+    // Cleanup on unload
     window.addEventListener('unload', () => {
-        console.log('injectTimerButton: cleaning up');
         if (btn.dataset.intervalId) {
             clearInterval(btn.dataset.intervalId);
             delete btn.dataset.intervalId;
@@ -100,10 +98,6 @@ export async function injectTimerButton() {
     });
 }
 
-function isIssuePage() {
-    return location.pathname.match(/^\/[^/]+\/[^/]+\/issues\/\d+$/);
-}
-
 function createTimerButton() {
     const btn = document.createElement('button');
     btn.id = 'track-time-btn';
@@ -111,17 +105,6 @@ function createTimerButton() {
     btn.className = 'btn btn-sm';
     btn.textContent = 'Start Timer';
     return btn;
-}
-
-async function getStorageData() {
-    return new Promise((resolve) => {
-        chrome.storage.local.get([STORAGE_KEYS.ACTIVE_ISSUE, STORAGE_KEYS.START_TIME], (data) => {
-            resolve({
-                activeIssue: data[STORAGE_KEYS.ACTIVE_ISSUE] || null,
-                startTime: data[STORAGE_KEYS.START_TIME] || null,
-            });
-        });
-    });
 }
 
 function updateButtonText(btn, startTime, totalTime) {
@@ -135,7 +118,7 @@ function startButtonUpdateInterval(btn, totalTime) {
             delete btn.dataset.intervalId;
             return;
         }
-        const { startTime } = await getStorageData();
+        const { startTime } = await StorageService.getMultiple([STORAGE_KEYS.START_TIME]);
         if (startTime && !isNaN(new Date(startTime).getTime())) {
             updateButtonText(btn, startTime, totalTime);
         } else {
