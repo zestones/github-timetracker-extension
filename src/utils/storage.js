@@ -1,37 +1,27 @@
 export class StorageService {
     static async get(key) {
-        return new Promise((resolve) => {
-            chrome.storage.local.get(key, (data) => resolve(data[key] ?? null));
-        });
+        const data = await chrome.storage.local.get(key);
+        return data[key] ?? null;
     }
 
     static async set(key, value) {
-        return new Promise((resolve) => {
-            chrome.storage.local.set({ [key]: value }, resolve);
-        });
+        return chrome.storage.local.set({ [key]: value });
     }
 
     static async remove(key) {
-        return new Promise((resolve) => {
-            chrome.storage.local.remove(key, resolve);
-        });
+        return chrome.storage.local.remove(key);
     }
 
     static async getMultiple(keys) {
-        return new Promise((resolve) => {
-            chrome.storage.local.get(keys, (data) => {
-                const result = {};
-                for (const key of keys) {
-                    result[key] = data[key] ?? null;
-                }
-                resolve(result);
-            });
-        });
+        const data = await chrome.storage.local.get(keys);
+        const result = {};
+        for (const key of keys) {
+            result[key] = data[key] ?? null;
+        }
+        return result;
     }
 
     static async removeMultiple(keys) {
-        return new Promise((resolve) => {
-            chrome.storage.local.remove(keys, resolve);
-        });
+        return chrome.storage.local.remove(keys);
     }
 }
