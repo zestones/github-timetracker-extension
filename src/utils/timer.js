@@ -126,20 +126,34 @@ export class TimerService {
             const issueInfo = GitHubService.parseIssueUrl(issueUrl);
             const { owner, repo, issueNumber } = issueInfo;
 
-            if (githubToken) {
-                try {
-                    await GitHubService.postComment({ owner, repo, issueNumber, seconds: timeSpentSeconds });
-                } catch (error) {
-                    console.error('Не удалось отправить комментарий:', error);
-                }
-            }
-
             const updatedTrackedTimes = [...(trackedTimes || []), {
                 issueUrl,
                 title: taskTitle,
                 seconds: timeSpentSeconds,
                 date: this.getLocalDateString(),
             }];
+
+            if (githubToken) {
+                try {
+                    const issueEntries = updatedTrackedTimes
+                        .filter(e => e.issueUrl === issueUrl)
+                        .map(e => ({ date: e.date, seconds: e.seconds }));
+
+                    const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) || {};
+                    const username = (await GitHubService.getCurrentUsername());
+                    const commentKey = `${username}:${issueUrl}`;
+                    const result = await GitHubService.createOrUpdateTrackerComment({
+                        owner, repo, issueNumber,
+                        entries: issueEntries,
+                        cachedCommentId: commentIds[commentKey],
+                    });
+
+                    commentIds[commentKey] = result.commentId;
+                    await StorageService.set(STORAGE_KEYS.COMMENT_IDS, commentIds);
+                } catch (error) {
+                    console.error('Failed to sync tracker comment:', error);
+                }
+            }
 
             await Promise.all([
                 StorageService.set(STORAGE_KEYS.TRACKED_TIMES, updatedTrackedTimes),

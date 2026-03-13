@@ -1,6 +1,9 @@
 // content/injectTimerButton.js
 import { TimerService } from '../utils/timer.js';
 import { TimeService } from '../utils/time.js';
+import { GitHubService } from '../utils/github.js';
+import { StorageService } from '../utils/storage.js';
+import { IssueStorageService } from '../utils/issue-storage.js';
 import { addStorageListener } from '../utils/storage-listener.js';
 import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from '../utils/constants.js';
 
@@ -69,6 +72,9 @@ export async function injectTimerButton() {
 
     // Инициализация кнопки
     await updateButton();
+
+    // Lazy auto-recovery from GitHub if enabled and no local data
+    lazyRecover(location.pathname, updateButton);
 
     // Слушатель кликов
     btn.addEventListener('click', async () => {
@@ -145,4 +151,49 @@ function startButtonUpdateInterval(btn, totalTime) {
         }
     }, TIME_UPDATE_INTERVAL);
     btn.dataset.intervalId = intervalId;
+}
+
+async function lazyRecover(issueUrl, updateButton) {
+    try {
+        const autoSync = await StorageService.get(STORAGE_KEYS.AUTO_SYNC);
+        if (!autoSync) return;
+
+        const totalTime = await TimerService.getTotalTimeForIssue(issueUrl);
+        if (totalTime > 0) return; // already have local data
+
+        const { owner, repo, issueNumber } = GitHubService.parseIssueUrl(issueUrl);
+        const result = await GitHubService.recoverSingleIssue(owner, repo, issueNumber);
+        if (!result) return;
+
+        const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
+        const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) || {};
+        const username = await GitHubService.getCurrentUsername();
+        const commentKey = `${username}:${issueUrl}`;
+
+        commentIds[commentKey] = result.commentId;
+        for (const entry of result.entries) {
+            trackedTimes.push({
+                issueUrl,
+                title: `(${owner}) ${repo} | #${issueNumber}`,
+                seconds: entry.seconds,
+                date: entry.date,
+            });
+        }
+
+        await StorageService.set(STORAGE_KEYS.TRACKED_TIMES, trackedTimes);
+        await StorageService.set(STORAGE_KEYS.COMMENT_IDS, commentIds);
+
+        const issueExists = await IssueStorageService.exists(issueUrl);
+        if (!issueExists) {
+            await IssueStorageService.add({
+                url: issueUrl,
+                title: `(${owner}) ${repo} | #${issueNumber}`,
+            });
+        }
+
+        console.log(`lazyRecover: recovered ${result.entries.length} entries for ${issueUrl}`);
+        await updateButton();
+    } catch (e) {
+        console.log('lazyRecover: skipped -', e.message);
+    }
 }

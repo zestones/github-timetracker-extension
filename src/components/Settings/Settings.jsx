@@ -1,8 +1,11 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { GitHubStorageService } from '../../utils/github-storage.js';
+import { GitHubService } from '../../utils/github.js';
 import { StorageService } from '../../utils/storage.js';
+import { IssueStorageService } from '../../utils/issue-storage.js';
+import { CacheService } from '../../utils/cache.js';
 import { STORAGE_KEYS } from '../../utils/constants.js';
-import { IconDownload, IconTrash, IconSun, IconMoon, IconMonitor } from '../../icons.jsx';
+import { IconDownload, IconTrash, IconSun, IconMoon, IconMonitor, IconRefresh } from '../../icons.jsx';
 
 function exportCSV(tracked) {
     const header = 'Issue URL,Title,Seconds,Date\n';
@@ -36,6 +39,85 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
     const [isEditing, setIsEditing] = useState(false);
     const [tokenInput, setTokenInput] = useState('');
     const [tokenStatus, setTokenStatus] = useState(null);
+    const [syncStatus, setSyncStatus] = useState(null);
+    const [autoSync, setAutoSync] = useState(false);
+
+    useEffect(() => {
+        StorageService.get(STORAGE_KEYS.AUTO_SYNC).then(v => setAutoSync(!!v));
+    }, []);
+
+    const toggleAutoSync = async () => {
+        const newValue = !autoSync;
+        setAutoSync(newValue);
+        await StorageService.set(STORAGE_KEYS.AUTO_SYNC, newValue);
+    };
+
+    const handleSync = async () => {
+        setSyncStatus('syncing');
+        try {
+            const pinnedRepos = await CacheService.getPinnedRepos();
+            if (pinnedRepos.length === 0) {
+                setSyncStatus('no-repos');
+                return;
+            }
+
+            const recovered = await GitHubService.recoverAllTimes(pinnedRepos);
+            if (recovered.length === 0) {
+                setSyncStatus('no-data');
+                return;
+            }
+
+            const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
+            const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) || {};
+            const username = await GitHubService.getCurrentUsername();
+            let importedCount = 0;
+
+            for (const item of recovered) {
+                const commentKey = `${username}:${item.issueUrl}`;
+                commentIds[commentKey] = item.commentId;
+
+                // Get existing local entries for this issue
+                const localEntries = trackedTimes.filter(t => t.issueUrl === item.issueUrl);
+                const localTotal = localEntries.reduce((sum, e) => sum + (e.seconds || 0), 0);
+                const remoteTotal = item.entries.reduce((sum, e) => sum + (e.seconds || 0), 0);
+
+                // Only import if remote has more time (avoid duplicates)
+                if (remoteTotal > localTotal) {
+                    // Remove existing local entries for this issue
+                    const filtered = trackedTimes.filter(t => t.issueUrl !== item.issueUrl);
+                    trackedTimes.length = 0;
+                    trackedTimes.push(...filtered);
+
+                    const { owner, repo, issueNumber } = GitHubService.parseIssueUrl(item.issueUrl);
+                    for (const entry of item.entries) {
+                        trackedTimes.push({
+                            issueUrl: item.issueUrl,
+                            title: `(${owner}) ${repo} | #${issueNumber}`,
+                            seconds: entry.seconds,
+                            date: entry.date,
+                        });
+                        importedCount++;
+                    }
+                }
+
+                const issueExists = await IssueStorageService.exists(item.issueUrl);
+                if (!issueExists) {
+                    const { owner, repo, issueNumber } = GitHubService.parseIssueUrl(item.issueUrl);
+                    await IssueStorageService.add({
+                        url: item.issueUrl,
+                        title: `(${owner}) ${repo} | #${issueNumber}`,
+                    });
+                }
+            }
+
+            await StorageService.set(STORAGE_KEYS.TRACKED_TIMES, trackedTimes);
+            await StorageService.set(STORAGE_KEYS.COMMENT_IDS, commentIds);
+            setSyncStatus(`done:${importedCount}`);
+        } catch (error) {
+            console.error('Sync failed:', error);
+            setSyncStatus('error');
+        }
+    };
 
     const handleSave = async () => {
         const isValid = await GitHubStorageService.validateGitHubToken(tokenInput);
@@ -56,7 +138,7 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
     };
 
     return (
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-5">
             {/* Account */}
             <div>
                 <div className="text-[11px] font-medium text-muted uppercase tracking-wider mb-2">Account</div>
@@ -171,6 +253,54 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
                     </button>
                 </div>
             </div>
+
+            {/* Sync from GitHub */}
+            {token && (
+                <div>
+                    <div className="text-[11px] font-medium text-muted uppercase tracking-wider mb-2">Sync</div>
+                    <button
+                        onClick={handleSync}
+                        disabled={syncStatus === 'syncing'}
+                        className="w-full flex items-center justify-center gap-1.5 bg-surface hover:bg-raised text-secondary text-[13px] font-medium py-2.5 rounded-xl cursor-pointer transition-colors border border-border-default disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <IconRefresh size={14} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
+                        {syncStatus === 'syncing' ? 'Syncing...' : 'Sync from GitHub'}
+                    </button>
+                    {syncStatus && syncStatus !== 'syncing' && (
+                        <div className={`text-[11px] mt-1.5 text-center ${syncStatus === 'error' ? 'text-danger-text' : 'text-muted'}`}>
+                            {syncStatus === 'no-repos' && 'No pinned repos found. Pin repos first.'}
+                            {syncStatus === 'no-data' && 'No tracked time found in GitHub comments.'}
+                            {syncStatus === 'error' && 'Sync failed. Check your token and try again.'}
+                            {syncStatus.startsWith('done:') && `Imported ${syncStatus.split(':')[1]} new entries.`}
+                        </div>
+                    )}
+
+                    {/* Auto-sync toggle */}
+                    <div className="mt-3 bg-surface rounded-xl p-3 border border-border-default">
+                        <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0 mr-3">
+                                <div className="text-[12px] font-medium text-primary">Auto-recover on page load</div>
+                                <div className="text-[11px] text-muted mt-0.5 leading-snug">
+                                    When you open a GitHub issue page that has no local time data, automatically fetch it from the GitHub comment. Uses 1-2 API calls per issue.
+                                </div>
+                            </div>
+                            <button
+                                onClick={toggleAutoSync}
+                                className={`relative shrink-0 w-9 h-5 rounded-full transition-colors cursor-pointer ${autoSync ? 'bg-accent' : 'bg-raised border border-border-default'
+                                    }`}
+                            >
+                                <span
+                                    className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${autoSync ? 'translate-x-4' : ''
+                                        }`}
+                                />
+                            </button>
+                        </div>
+                        <div className="text-[10px] text-faint mt-2 leading-snug">
+                            Useful when switching browsers/devices or after clearing extension data. Also helps if multiple team members use this extension — each user keeps their own tracked time.
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Danger Zone */}
             <div>

@@ -87,9 +87,23 @@ async function handleTimerStop(reason) {
         const token = await GitHubStorageService.getGitHubToken();
         if (token) {
             try {
-                await GitHubService.postComment({ owner, repo, issueNumber, seconds: timeSpent });
+                const issueEntries = tracked
+                    .filter(e => e.issueUrl === activeIssue)
+                    .map(e => ({ date: e.date, seconds: e.seconds }));
+
+                const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) || {};
+                const username = await GitHubService.getCurrentUsername();
+                const commentKey = `${username}:${activeIssue}`;
+                const result = await GitHubService.createOrUpdateTrackerComment({
+                    owner, repo, issueNumber,
+                    entries: issueEntries,
+                    cachedCommentId: commentIds[commentKey],
+                });
+
+                commentIds[commentKey] = result.commentId;
+                await StorageService.set(STORAGE_KEYS.COMMENT_IDS, commentIds);
             } catch (error) {
-                console.error('Failed to post comment:', error);
+                console.error('Failed to sync tracker comment:', error);
             }
         }
 
