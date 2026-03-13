@@ -32,15 +32,6 @@ export async function injectTimerButton() {
         return;
     }
 
-    // Remove any existing buttons
-    const existingButtons = document.querySelectorAll('#track-time-btn');
-    existingButtons.forEach((btn) => {
-        if (btn.dataset.intervalId) {
-            clearInterval(btn.dataset.intervalId);
-        }
-        btn.remove();
-    });
-
     const btn = createTimerButton();
     isInjected = true;
 
@@ -58,7 +49,7 @@ export async function injectTimerButton() {
         } else {
             btn.textContent = `${TimeService.formatTime(0, totalTime)} Start Timer`;
             if (btn.dataset.intervalId) {
-                clearInterval(btn.dataset.intervalId);
+                clearInterval(Number(btn.dataset.intervalId));
                 delete btn.dataset.intervalId;
             }
         }
