@@ -7,6 +7,31 @@ A feature-rich browser extension that brings time tracking directly into GitHub.
 > [!NOTE]
 > This project was forked and significantly expanded from [lywebdev/github-timetracker-extension](https://github.com/lywebdev/github-timetracker-extension).
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><strong>Issues</strong></td>
+    <td align="center"><strong>Calendar</strong></td>
+    <td align="center"><strong>Stats</strong></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/issues.png" width="280" alt="Issues tab" /></td>
+    <td><img src="docs/screenshots/calendar.png" width="280" alt="Calendar view" /></td>
+    <td><img src="docs/screenshots/stats.png" width="280" alt="Stats overview" /></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Repo Details</strong></td>
+    <td align="center"><strong>Settings</strong></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/stats-details.png" width="280" alt="Repository detail view" /></td>
+    <td><img src="docs/screenshots/settings.png" width="280" alt="Settings panel" /></td>
+    <td></td>
+  </tr>
+</table>
+
 ---
 
 ## Features
@@ -56,15 +81,24 @@ All data is stored locally via Chrome's `storage.local` API — the extension wo
 ## Architecture
 
 ```mermaid
-graph LR
-    subgraph Browser Extension
-        CS[Content Script] -->|injects timer| GH[GitHub Issue Page]
-        CS -->|messages| BG[Background Service Worker]
-        BG -->|alarms / cache| ST[(Chrome Storage)]
-        PO[Popup UI] -->|reads / writes| ST
-        PO -->|API calls| API[GitHub API]
-        BG -->|periodic refresh| API
+graph TD
+    subgraph ext [Browser Extension]
+        direction TB
+        CS[Content Script]
+        BG[Background Service Worker]
+        PO[Popup UI]
     end
+
+    GH[GitHub Issue Page]
+    ST[(Chrome Storage)]
+    API[GitHub API]
+
+    CS -- injects timer --> GH
+    CS -- messages --> BG
+    BG -- alarms / cache --> ST
+    PO -- reads / writes --> ST
+    PO -- API calls --> API
+    BG -- periodic refresh --> API
 ```
 
 The extension is composed of three independently built entry points:
