@@ -5,12 +5,13 @@ import { GitHubStorageService } from '../utils/github-storage.js';
 import { STORAGE_KEYS, CACHE_REFRESH_INTERVAL } from '../utils/constants.js';
 import { IssueStorageService } from "../utils/issue-storage.js";
 import { CacheService } from '../utils/cache.js';
+import { PinnedReposService } from '../utils/pinned-repos.js';
 
 async function refreshCachedIssues() {
     const token = await GitHubStorageService.getGitHubToken();
     if (!token) return;
 
-    const pinnedRepos = await CacheService.getPinnedRepos();
+    const pinnedRepos = await PinnedReposService.getPinnedRepos();
     for (const repo of pinnedRepos) {
         try {
             const [owner, repoName] = repo.fullName.split('/');

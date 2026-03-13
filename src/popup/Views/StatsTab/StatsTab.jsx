@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback, useEffect } from 'preact/hooks';
 import { TimeService } from '../../../utils/time.js';
 import { AggregationService } from '../../../utils/aggregation.js';
 import { GitHubService } from '../../../utils/github.js';
-import { CacheService } from '../../../utils/cache.js';
+import { PinnedReposService } from '../../../utils/pinned-repos.js';
 import { IssueStorageService } from '../../../utils/issue-storage.js';
 import { StorageService } from '../../../utils/storage.js';
 import { STORAGE_KEYS } from '../../../utils/constants.js';
@@ -28,7 +28,7 @@ export function StatsTab({ tracked, user }) {
     const fetchEveryoneData = useCallback(async () => {
         setEveryoneLoading(true);
         try {
-            const pinnedRepos = await CacheService.getPinnedRepos();
+            const pinnedRepos = await PinnedReposService.getPinnedRepos();
             if (pinnedRepos.length === 0) {
                 setEveryoneData([]);
                 return;

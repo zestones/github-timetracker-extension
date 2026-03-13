@@ -1,5 +1,5 @@
 import { StorageService } from './storage';
-import {STORAGE_KEYS} from "./constants.js";
+import { STORAGE_KEYS } from "./constants.js";
 
 const STORAGE_KEY = STORAGE_KEYS.ISSUES;
 
@@ -43,9 +43,5 @@ export class IssueStorageService {
     static async exists(url) {
         const issues = await this.getAll();
         return issues.some(issue => issue.url === url);
-    }
-
-    static async clear() {
-        await StorageService.remove(STORAGE_KEY);
     }
 }

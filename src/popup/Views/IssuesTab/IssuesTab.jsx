@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'preact/hooks';
 import { IssueRow } from '../../../components/IssueRow/IssueRow.jsx';
 import { PinRepoModal } from '../../../components/PinRepoModal/PinRepoModal.jsx';
 import { CacheService } from '../../../utils/cache.js';
+import { PinnedReposService } from '../../../utils/pinned-repos.js';
 import { GitHubService } from '../../../utils/github.js';
 import { TimerService } from '../../../utils/timer.js';
 import { IssueStorageService } from '../../../utils/issue-storage.js';
@@ -25,7 +26,7 @@ export function IssuesTab() {
 
     useEffect(() => {
         const load = async () => {
-            const repos = await CacheService.getPinnedRepos();
+            const repos = await PinnedReposService.getPinnedRepos();
             setPinnedRepos(repos);
 
             const cachedUser = await CacheService.getCachedUser();
@@ -265,7 +266,7 @@ export function IssuesTab() {
                                     <button
                                         onClick={async (e) => {
                                             e.stopPropagation();
-                                            await CacheService.removePinnedRepo(repo.fullName);
+                                            await PinnedReposService.removePinnedRepo(repo.fullName);
                                             setPinnedRepos((prev) =>
                                                 prev.filter((r) => r.fullName !== repo.fullName)
                                             );
@@ -318,8 +319,8 @@ export function IssuesTab() {
                 <PinRepoModal
                     onClose={() => setShowPinModal(false)}
                     onPin={async (repo) => {
-                        await CacheService.addPinnedRepo(repo);
-                        const updated = await CacheService.getPinnedRepos();
+                        await PinnedReposService.addPinnedRepo(repo);
+                        const updated = await PinnedReposService.getPinnedRepos();
                         setPinnedRepos(updated);
                         setExpandedRepos((prev) => ({ ...prev, [repo.fullName]: true }));
                         refreshRepoIssues(repo);

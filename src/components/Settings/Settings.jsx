@@ -3,7 +3,6 @@ import { GitHubStorageService } from '../../utils/github-storage.js';
 import { GitHubService } from '../../utils/github.js';
 import { StorageService } from '../../utils/storage.js';
 import { IssueStorageService } from '../../utils/issue-storage.js';
-import { CacheService } from '../../utils/cache.js';
 import { STORAGE_KEYS } from '../../utils/constants.js';
 import { syncFromGitHub } from '../../utils/sync.js';
 import { IconDownload, IconTrash, IconSun, IconMoon, IconMonitor, IconRefresh } from '../../icons.jsx';

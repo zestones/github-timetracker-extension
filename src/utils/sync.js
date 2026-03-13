@@ -1,7 +1,7 @@
 import { GitHubService } from './github.js';
 import { StorageService } from './storage.js';
 import { IssueStorageService } from './issue-storage.js';
-import { CacheService } from './cache.js';
+import { PinnedReposService } from './pinned-repos.js';
 import { STORAGE_KEYS } from './constants.js';
 
 /**
@@ -10,7 +10,7 @@ import { STORAGE_KEYS } from './constants.js';
  * Returns { importedCount } or null if nothing to recover.
  */
 export async function syncFromGitHub() {
-    const pinnedRepos = await CacheService.getPinnedRepos();
+    const pinnedRepos = await PinnedReposService.getPinnedRepos();
     if (pinnedRepos.length === 0) return null;
 
     const recovered = await GitHubService.recoverAllTimes(pinnedRepos);

@@ -1,5 +1,5 @@
 import { StorageService } from './storage.js';
-import { STORAGE_KEYS, CACHE_PREFIX, CACHE_TTL } from './constants.js';
+import { CACHE_PREFIX, CACHE_TTL } from './constants.js';
 
 export class CacheService {
     static async get(key) {
@@ -19,25 +19,6 @@ export class CacheService {
 
     static async invalidate(key) {
         await StorageService.remove(`${CACHE_PREFIX}${key}`);
-    }
-
-    // Pinned repos
-    static async getPinnedRepos() {
-        return (await StorageService.get(STORAGE_KEYS.PINNED_REPOS)) || [];
-    }
-
-    static async addPinnedRepo(repo) {
-        const repos = await this.getPinnedRepos();
-        if (repos.some((r) => r.fullName === repo.fullName)) return;
-        repos.push(repo);
-        await StorageService.set(STORAGE_KEYS.PINNED_REPOS, repos);
-    }
-
-    static async removePinnedRepo(fullName) {
-        const repos = await this.getPinnedRepos();
-        const filtered = repos.filter((r) => r.fullName !== fullName);
-        await StorageService.set(STORAGE_KEYS.PINNED_REPOS, filtered);
-        await this.invalidate(`issues:${fullName}`);
     }
 
     // User cache
