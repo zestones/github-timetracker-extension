@@ -8,9 +8,16 @@ import { isIssuePage, getIssueTitle } from './helpers.js';
 
 // Flag to prevent duplicate injections on same page
 let isInjected = false;
+// Cleanup function for the current button's resources (interval + storage listener).
+// Called on SPA navigation to prevent listener leaks.
+let currentCleanup = null;
 
-// Reset injection flag on navigation
+// Reset injection flag and clean up resources on SPA navigation
 export function resetInjectedFlag() {
+    if (currentCleanup) {
+        currentCleanup();
+        currentCleanup = null;
+    }
     isInjected = false;
 }
 
@@ -78,15 +85,15 @@ export async function injectTimerButton() {
         updateButton();
     });
 
-    // Cleanup on unload
-    window.addEventListener('unload', () => {
+    // Store cleanup for SPA navigation (called by resetInjectedFlag).
+    // On real page unload, the entire JS context is destroyed — no manual cleanup needed.
+    currentCleanup = () => {
         if (btn.dataset.intervalId) {
-            clearInterval(btn.dataset.intervalId);
+            clearInterval(Number(btn.dataset.intervalId));
             delete btn.dataset.intervalId;
         }
         removeListener();
-        isInjected = false;
-    });
+    };
 }
 
 function createTimerButton() {

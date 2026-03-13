@@ -42,20 +42,29 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
 });
 
-// Single observer for SPA navigation + container appearance
+// Detect SPA navigation via MutationObserver + popstate.
+// No pushState monkey-patching — the MutationObserver fires when GitHub updates
+// the DOM after any pushState call, catching the pathname change reliably without
+// conflicting with other extensions or GitHub's own code.
 let lastPathname = location.pathname;
+
+function handleNavigation() {
+    if (location.pathname === lastPathname) return;
+    resetInjectedFlag();
+    lastPathname = location.pathname;
+    if (isIssuePage()) {
+        checkContainer();
+    }
+}
+
 const observer = new MutationObserver(() => {
-    // Handle SPA pathname changes
+    // SPA pathname change detection (cheap string comparison, checked first)
     if (location.pathname !== lastPathname) {
-        resetInjectedFlag();
-        lastPathname = location.pathname;
-        if (isIssuePage()) {
-            checkContainer();
-        }
+        handleNavigation();
         return;
     }
 
-    // Handle container appearance on current issue page
+    // On issue pages, ensure button exists (debounced to avoid thrashing)
     if (isIssuePage()) {
         const buttonExists = document.querySelector('#track-time-btn');
         if (!buttonExists) {
@@ -65,29 +74,8 @@ const observer = new MutationObserver(() => {
 });
 observer.observe(document.body, { childList: true, subtree: true });
 
-// Listen for popstate (back/forward navigation)
-window.addEventListener('popstate', () => {
-    if (location.pathname !== lastPathname) {
-        resetInjectedFlag();
-        lastPathname = location.pathname;
-        if (isIssuePage()) {
-            checkContainer();
-        }
-    }
-});
-
-// Patch pushState for client-side navigation interception
-const originalPushState = history.pushState;
-history.pushState = function (...args) {
-    originalPushState.apply(this, args);
-    if (location.pathname !== lastPathname) {
-        resetInjectedFlag();
-        lastPathname = location.pathname;
-        if (isIssuePage()) {
-            checkContainer();
-        }
-    }
-};
+// Back/forward navigation fires popstate
+window.addEventListener('popstate', handleNavigation);
 
 // Handle messages from popup/background for timer sync
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -102,8 +90,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
-// Cleanup on unload
-window.addEventListener('unload', () => {
-    observer.disconnect();
-    history.pushState = originalPushState;
-});
+// No 'unload' listener — it's unreliable in modern Chrome (bfcache skips it)
+// and unnecessary: the observer and intervals are GC'd when the page is destroyed,
+// and SPA navigation cleanup is handled by resetInjectedFlag() above.
