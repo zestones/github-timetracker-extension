@@ -7,7 +7,8 @@ import { STORAGE_KEYS } from '../../utils/constants.js';
 import { useStorageListener } from '../../hooks/useStorageListener.js';
 import { useActiveTimer } from '../../hooks/useActiveTimer.js';
 import { useIssuesData } from '../../hooks/useIssuesData.js';
-import { IconSearch, IconPlus, IconChevronDown, IconChevronRight, IconRefresh, IconX, IconPin } from '../../icons.jsx';
+import { SearchInput } from '../../components/SearchInput.jsx';
+import { IconPlus, IconChevronDown, IconChevronRight, IconRefresh, IconX, IconPin } from '../../icons.jsx';
 
 export function IssuesTab() {
     const [expandedRepos, setExpandedRepos] = useState({});
@@ -81,18 +82,11 @@ export function IssuesTab() {
     return (
         <div className="p-4">
             {/* Search */}
-            <div className="relative mb-3">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">
-                    <IconSearch size={14} />
-                </div>
-                <input
-                    type="text"
-                    placeholder="Search issues..."
-                    value={searchTerm}
-                    onInput={(e) => setSearchTerm(e.currentTarget.value)}
-                    className="w-full pl-8 pr-3 py-2 text-[13px] bg-surface border border-border-default rounded-lg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary placeholder:text-muted"
-                />
-            </div>
+            <SearchInput
+                placeholder="Search issues..."
+                value={searchTerm}
+                onInput={setSearchTerm}
+            />
 
             {/* Filter pills */}
             <div className="flex gap-1.5 mb-4 flex-wrap">

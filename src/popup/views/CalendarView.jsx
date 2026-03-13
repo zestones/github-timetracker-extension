@@ -2,7 +2,8 @@ import { useState, useMemo } from 'preact/hooks';
 import { TimeService } from '../../utils/time.js';
 import { TrackedList } from './TrackedList.jsx';
 import { useElapsedTimer } from '../../hooks/useElapsedTimer.js';
-import { IconChevronLeft, IconChevronRight, IconSearch, IconClock } from '../../icons.jsx';
+import { SearchInput } from '../../components/SearchInput.jsx';
+import { IconChevronLeft, IconChevronRight, IconClock } from '../../icons.jsx';
 
 export function CalendarView({ tracked }) {
   const getLocalDate = () => {
@@ -162,18 +163,11 @@ export function CalendarView({ tracked }) {
       </div>
 
       {/* Search */}
-      <div className="relative mb-3">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">
-          <IconSearch size={13} />
-        </div>
-        <input
-          type="text"
-          placeholder="Search entries..."
-          value={searchTerm}
-          onInput={(e) => setSearchTerm(e.currentTarget.value)}
-          className="w-full pl-8 pr-3 py-1.5 text-[13px] bg-surface border border-border-default rounded-lg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-primary placeholder:text-muted"
-        />
-      </div>
+      <SearchInput
+        placeholder="Search entries..."
+        value={searchTerm}
+        onInput={setSearchTerm}
+      />
 
       {/* Entries */}
       {entries.length === 0 ? (
