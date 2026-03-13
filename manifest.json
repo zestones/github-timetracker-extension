@@ -33,5 +33,8 @@
     "16": "icons/favicon.png",
     "48": "icons/favicon.png",
     "128": "icons/favicon.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
   }
 }

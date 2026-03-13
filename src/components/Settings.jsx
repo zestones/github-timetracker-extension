@@ -17,12 +17,20 @@ function downloadFile(content, filename, mimeType) {
     URL.revokeObjectURL(url);
 }
 
+function sanitizeCSVCell(value) {
+    let str = String(value);
+    if (/^[=+\-@\t\r]/.test(str)) {
+        str = "'" + str;
+    }
+    return str.replace(/"/g, '""');
+}
+
 function exportCSV(tracked) {
     const header = 'Issue URL,Title,Seconds,Date\n';
     const rows = tracked.map((e) => {
         const url = `https://github.com${e.issueUrl}`;
-        const title = (e.title || '').replace(/"/g, '""');
-        return `"${url}","${title}",${e.seconds},"${e.date}"`;
+        const title = sanitizeCSVCell(e.title || '');
+        return `"${sanitizeCSVCell(url)}","${title}",${e.seconds},"${sanitizeCSVCell(e.date)}"`;
     }).join('\n');
     downloadFile(header + rows, `timetracker-export-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv');
 }

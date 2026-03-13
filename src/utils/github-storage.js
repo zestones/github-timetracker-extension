@@ -1,12 +1,26 @@
 import { STORAGE_KEYS } from './constants.js';
 import { StorageService } from './storage.js';
 
+const GITHUB_TOKEN_PATTERN = /^(ghp_[a-zA-Z0-9]{36,251}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59}|[0-9a-f]{40})$/;
+
 export class GitHubStorageService {
+    static isValidTokenFormat(token) {
+        return typeof token === 'string' && GITHUB_TOKEN_PATTERN.test(token);
+    }
+
     static async getGitHubToken() {
-        return StorageService.get(STORAGE_KEYS.GITHUB_TOKEN);
+        const token = await StorageService.get(STORAGE_KEYS.GITHUB_TOKEN);
+        if (token && !this.isValidTokenFormat(token)) {
+            console.warn('Stored GitHub token has unexpected format');
+            return null;
+        }
+        return token;
     }
 
     static async setGitHubToken(token) {
+        if (!this.isValidTokenFormat(token)) {
+            throw new Error('Invalid GitHub token format');
+        }
         return StorageService.set(STORAGE_KEYS.GITHUB_TOKEN, token);
     }
 
@@ -15,6 +29,7 @@ export class GitHubStorageService {
     }
 
     static async validateGitHubToken(token) {
+        if (!this.isValidTokenFormat(token)) return false;
         try {
             const response = await fetch('https://api.github.com/user', {
                 headers: { Authorization: `token ${token}` }
