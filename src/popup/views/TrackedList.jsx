@@ -1,9 +1,9 @@
 import { TimerService } from '../../utils/timer.js';
-import { useElapsedTimer } from '../../hooks/useElapsedTimer.js';
+import { useActiveTimer } from '../../hooks/useActiveTimer.js';
 import { IconPlay, IconStop, IconExternalLink } from '../../icons.jsx';
 
 export function TrackedList({ entries, showTimerControls = false }) {
-    const { activeIssue, startTime, elapsedTime, isActive: isTimerActive } = useElapsedTimer();
+    const { isActive: isTimerActive } = useActiveTimer();
 
     const handleTimerClick = async (entry) => {
         if (isTimerActive(entry.issueUrl)) {
@@ -28,9 +28,7 @@ export function TrackedList({ entries, showTimerControls = false }) {
                         </div>
                         <div className="flex items-center gap-2 mt-0.5 text-[11px] text-muted">
                             <span className="font-mono tabular-nums">
-                                {isActive(entry) && elapsedTime
-                                    ? elapsedTime
-                                    : entry.displayTime}
+                                {entry.displayTime}
                             </span>
                             {entry.date && (
                                 <>
