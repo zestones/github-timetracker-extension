@@ -57,10 +57,8 @@ export async function injectTimerButton() {
         }
     };
 
-    // Добавляем кнопку в DOM перед обновлением
     container.append(btn);
 
-    // Инициализация кнопки
     await updateButton();
 
     // Click listener

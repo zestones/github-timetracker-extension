@@ -1,4 +1,4 @@
-import { StorageService } from './storage';
+import { StorageService } from './storage.js';
 import { STORAGE_KEYS } from "./constants.js";
 
 const STORAGE_KEY = STORAGE_KEYS.ISSUES;

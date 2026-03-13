@@ -19,7 +19,7 @@ export function IssuesTab() {
     const [loading, setLoading] = useState({});
     const [showPinModal, setShowPinModal] = useState(false);
     const [activeIssue, setActiveIssue] = useState(null);
-    const [filter, setFilter] = useState('all');
+    const [filter, setFilter] = useState('open');
     const [currentUser, setCurrentUser] = useState(null);
 
     const tracked = useStorageListener(STORAGE_KEYS.TRACKED_TIMES, []);
@@ -111,7 +111,7 @@ export function IssuesTab() {
 
     const filterIssue = (issue) => {
         if (filter === 'closed') return issue.state === 'closed';
-        if (filter === 'all') return issue.state !== 'closed';
+        if (filter === 'open') return issue.state !== 'closed';
         if (filter === 'assigned') return issue.state !== 'closed' && (issue.assignees || []).includes(currentUser);
         if (filter === 'created') return issue.state !== 'closed' && issue.user === currentUser;
         return true;
@@ -155,7 +155,7 @@ export function IssuesTab() {
             {/* Filter pills */}
             <div className="flex gap-1.5 mb-4 flex-wrap">
                 {[
-                    { id: 'all', label: 'All' },
+                    { id: 'open', label: 'Open' },
                     { id: 'assigned', label: 'Assigned to me' },
                     { id: 'created', label: 'Created by me' },
                     { id: 'closed', label: 'Closed' },
@@ -292,7 +292,7 @@ export function IssuesTab() {
                                         </div>
                                     ) : (repoIssues[repo.fullName] || []).filter(filterIssue).length === 0 ? (
                                         <div className="text-[11px] text-muted py-3 pl-2">
-                                            {filter === 'closed' ? 'No closed issues' : filter === 'all' ? 'No open issues' : 'No matching issues'}
+                                            {filter === 'closed' ? 'No closed issues' : filter === 'open' ? 'No open issues' : 'No matching issues'}
                                         </div>
                                     ) : (
                                         (repoIssues[repo.fullName] || []).filter(filterIssue).map((issue) => (

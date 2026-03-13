@@ -6,11 +6,6 @@ import { STORAGE_KEYS, TIME_UPDATE_INTERVAL } from './constants.js';
 import { IssueStorageService } from "./issue-storage.js";
 
 export class TimerService {
-    /**
-     * Вычисляет общее затраченное время для указанного URL задачи
-     * @param {string} issueUrl - URL задачи
-     * @returns {Promise<number>} Общее время в секундах
-     */
     static async getTotalTimeForIssue(issueUrl) {
         const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
         return trackedTimes
@@ -18,12 +13,6 @@ export class TimerService {
             .reduce((total, entry) => total + (entry.seconds || 0), 0);
     }
 
-    /**
-     * Запускает таймер для указанного URL задачи
-     * @param {string} issueUrl - URL задачи
-     * @param {HTMLButtonElement | null} buttonElement - Кнопка, связанная с таймером (необязательно)
-     * @returns {Promise<{ issueUrl: string; totalTime: number; intervalId: number | null; isRunning: boolean; }>} Объект с информацией о задаче и статусе таймера
-     */
     static async startTimer(issueUrl, buttonElement = null, issueTitle_param = null) {
         try {
             const [activeIssueUrl, startTime, issue] = await Promise.all([
@@ -69,7 +58,7 @@ export class TimerService {
 
             return { issueUrl, totalTime, intervalId, isRunning: true };
         } catch (error) {
-            console.error('Не удалось запустить таймер:', error);
+            console.error('Failed to start timer:', error);
             if (buttonElement?.dataset.intervalId) {
                 clearInterval(parseInt(buttonElement.dataset.intervalId, 10));
                 buttonElement.textContent = 'Start Timer';
@@ -82,12 +71,6 @@ export class TimerService {
         }
     }
 
-    /**
-     * Останавливает таймер для указанного URL задачи
-     * @param {string} issueUrl - URL задачи
-     * @param {HTMLButtonElement | null} buttonElement - Кнопка, связанная с таймером (необязательно)
-     * @returns {Promise<{ issueUrl: string; totalTime: number; isRunning: boolean }>} Объект с информацией о задаче и статусе таймера
-     */
     static async stopTimer(issueUrl, buttonElement = null) {
         try {
             const [startTime, githubToken, trackedTimes, existingIssue] = await Promise.all([
@@ -98,7 +81,7 @@ export class TimerService {
             ]);
 
             if (!startTime || isNaN(new Date(startTime).getTime())) {
-                console.error('Некорректное startTime:', startTime);
+                console.error('Invalid startTime:', startTime);
                 this.resetButtonState(buttonElement);
                 await StorageService.removeMultiple([
                     STORAGE_KEYS.ACTIVE_ISSUE,
@@ -139,7 +122,7 @@ export class TimerService {
 
             return { issueUrl, totalTime, isRunning: false };
         } catch (error) {
-            console.error('Не удалось остановить таймер:', error);
+            console.error('Failed to stop timer:', error);
             this.resetButtonState(buttonElement);
             return { issueUrl, totalTime: 0, isRunning: false };
         }
@@ -169,11 +152,6 @@ export class TimerService {
         })();
     }
 
-    /**
-     * Сбрасывает состояние кнопки таймера
-     * @param {HTMLButtonElement | null} buttonElement - Кнопка, состояние которой нужно сбросить
-     * @param {number} totalTime - Общее время, которое нужно отобразить на кнопке
-     */
     static resetButtonState(buttonElement, totalTime = 0) {
         if (buttonElement?.dataset.intervalId) {
             clearInterval(parseInt(buttonElement.dataset.intervalId, 10));

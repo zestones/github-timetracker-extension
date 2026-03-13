@@ -1,5 +1,5 @@
 import { StorageService } from './storage.js';
-import { CACHE_PREFIX, CACHE_TTL } from './constants.js';
+import { CACHE_PREFIX, CACHE_TTL, USER_CACHE_TTL } from './constants.js';
 
 export class CacheService {
     static async get(key) {
@@ -27,7 +27,7 @@ export class CacheService {
     }
 
     static async setCachedUser(user) {
-        await this.set('user', user, 30 * 60 * 1000); // 30 min TTL
+        await this.set('user', user, USER_CACHE_TTL);
     }
 
     // Repo issues cache

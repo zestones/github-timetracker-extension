@@ -1,9 +1,8 @@
 // content/index.js
 import { injectTimerButton, resetInjectedFlag } from './injectTimerButton.js';
 import { isIssuePage } from './helpers.js';
-import { STORAGE_KEYS } from '../utils/constants.js';
+import { STORAGE_KEYS, DEBOUNCE_INJECT_MS, CONTAINER_CHECK_INTERVAL_MS, CONTAINER_CHECK_MAX_ATTEMPTS } from '../utils/constants.js';
 
-// Debounce to prevent multiple calls
 function debounce(fn, delay) {
     let timeoutId;
     return (...args) => {
@@ -12,11 +11,9 @@ function debounce(fn, delay) {
     };
 }
 
-// Debounced injectTimerButton
-const debouncedInjectTimerButton = debounce(injectTimerButton, 500);
+const debouncedInjectTimerButton = debounce(injectTimerButton, DEBOUNCE_INJECT_MS);
 
-// Recursive container check with retry
-function checkContainer(attempts = 10, delay = 500) {
+function checkContainer(attempts = CONTAINER_CHECK_MAX_ATTEMPTS, delay = CONTAINER_CHECK_INTERVAL_MS) {
     const container = document.querySelector('[data-testid="issue-metadata-fixed"]');
     const buttonExists = document.querySelector('#track-time-btn');
     if (buttonExists) return;
@@ -98,7 +95,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (isIssuePage() && message.issueUrl === location.pathname) {
             const buttonExists = document.querySelector('#track-time-btn');
             if (!buttonExists) {
-                checkContainer(15, 500);
+                checkContainer(15, CONTAINER_CHECK_INTERVAL_MS);
             }
         }
         sendResponse({ received: true });

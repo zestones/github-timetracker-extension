@@ -58,6 +58,12 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
     const handleSync = async () => {
         setSyncStatus('syncing');
         try {
+            const { PinnedReposService } = await import('../../utils/pinned-repos.js');
+            const repos = await PinnedReposService.getPinnedRepos();
+            if (repos.length === 0) {
+                setSyncStatus('no-repos');
+                return;
+            }
             const result = await syncFromGitHub();
             if (result === null) {
                 setSyncStatus('no-data');
@@ -277,7 +283,7 @@ export function Settings({ token, maskedToken, user, onTokenChange, onClearData,
 
             {/* Version */}
             <div className="text-center">
-                <span className="text-[11px] text-faint">GitHub Time Tracker v1.0.2</span>
+                <span className="text-[11px] text-faint">GitHub Time Tracker v{chrome.runtime.getManifest().version}</span>
             </div>
         </div>
     );
