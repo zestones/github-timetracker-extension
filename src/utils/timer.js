@@ -126,14 +126,6 @@ export class TimerService {
             const issueInfo = GitHubService.parseIssueUrl(issueUrl);
             const { owner, repo, issueNumber } = issueInfo;
 
-            if (githubToken) {
-                try {
-                    await GitHubService.postComment({ owner, repo, issueNumber, seconds: timeSpentSeconds });
-                } catch (error) {
-                    console.error('Не удалось отправить комментарий:', error);
-                }
-            }
-
             const updatedTrackedTimes = [...(trackedTimes || []), {
                 issueUrl,
                 title: taskTitle,
@@ -141,6 +133,7 @@ export class TimerService {
                 date: this.getLocalDateString(),
             }];
 
+            // Update local storage and UI immediately
             await Promise.all([
                 StorageService.set(STORAGE_KEYS.TRACKED_TIMES, updatedTrackedTimes),
                 StorageService.removeMultiple([
@@ -151,6 +144,11 @@ export class TimerService {
 
             const totalTime = await this.getTotalTimeForIssue(issueUrl);
             this.resetButtonState(buttonElement, totalTime);
+
+            // Sync to GitHub in the background (non-blocking)
+            if (githubToken) {
+                this.syncCommentInBackground(issueUrl, owner, repo, issueNumber, updatedTrackedTimes);
+            }
 
             return { issueUrl, totalTime, isRunning: false };
         } catch (error) {
@@ -169,6 +167,30 @@ export class TimerService {
             document.querySelector('span.js-issue-title')?.textContent?.trim() ||
             document.querySelector("[data-testid='issue-title']")?.textContent?.trim()
         ) || null;
+    }
+
+    static syncCommentInBackground(issueUrl, owner, repo, issueNumber, trackedTimes) {
+        (async () => {
+            try {
+                const issueEntries = trackedTimes
+                    .filter(e => e.issueUrl === issueUrl)
+                    .map(e => ({ date: e.date, seconds: e.seconds }));
+
+                const commentIds = (await StorageService.get(STORAGE_KEYS.COMMENT_IDS)) || {};
+                const username = await GitHubService.getCurrentUsername();
+                const commentKey = `${username}:${issueUrl}`;
+                const result = await GitHubService.createOrUpdateTrackerComment({
+                    owner, repo, issueNumber,
+                    entries: issueEntries,
+                    cachedCommentId: commentIds[commentKey],
+                });
+
+                commentIds[commentKey] = result.commentId;
+                await StorageService.set(STORAGE_KEYS.COMMENT_IDS, commentIds);
+            } catch (error) {
+                console.error('Background sync failed:', error);
+            }
+        })();
     }
 
     /**
