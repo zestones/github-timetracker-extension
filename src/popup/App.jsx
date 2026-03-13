@@ -84,6 +84,7 @@ export function App() {
 
     const confirmClear = async () => {
         await StorageService.remove(STORAGE_KEYS.TRACKED_TIMES);
+        await StorageService.remove(STORAGE_KEYS.EVERYONE_DATA);
         await IssueStorageService.removeAll();
         setShowClearConfirm(false);
     };

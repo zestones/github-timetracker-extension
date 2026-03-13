@@ -1,9 +1,11 @@
-import { useMemo, useState, useCallback } from 'preact/hooks';
+import { useMemo, useState, useCallback, useEffect } from 'preact/hooks';
 import { TimeService } from '../../../utils/time.js';
 import { AggregationService } from '../../../utils/aggregation.js';
 import { GitHubService } from '../../../utils/github.js';
 import { CacheService } from '../../../utils/cache.js';
 import { IssueStorageService } from '../../../utils/issue-storage.js';
+import { StorageService } from '../../../utils/storage.js';
+import { STORAGE_KEYS } from '../../../utils/constants.js';
 import { RepoDetailView } from './RepoDetailView.jsx';
 import { IconCalendar, IconX, IconChevronRight, IconUser, IconUsers, IconRefresh } from '../../../icons.jsx';
 
@@ -16,6 +18,13 @@ export function StatsTab({ tracked, user }) {
     const [everyoneData, setEveryoneData] = useState(null);
     const [everyoneLoading, setEveryoneLoading] = useState(false);
 
+    // Load cached everyone data on mount
+    useEffect(() => {
+        StorageService.get(STORAGE_KEYS.EVERYONE_DATA).then(cached => {
+            if (cached && cached.length > 0) setEveryoneData(cached);
+        });
+    }, []);
+
     const fetchEveryoneData = useCallback(async () => {
         setEveryoneLoading(true);
         try {
@@ -25,6 +34,9 @@ export function StatsTab({ tracked, user }) {
                 return;
             }
             const allUsersData = await GitHubService.fetchAllUsersData(pinnedRepos);
+            const username = user?.login;
+
+            // Build title map from issues + local tracked
             const issues = await IssueStorageService.getAll();
             const titleMap = {};
             for (const issue of issues) {
@@ -33,6 +45,35 @@ export function StatsTab({ tracked, user }) {
             for (const entry of tracked) {
                 if (!titleMap[entry.issueUrl]) titleMap[entry.issueUrl] = entry.title;
             }
+
+            // Fetch issue titles from API for entries not in titleMap
+            const missingUrls = new Set();
+            for (const item of allUsersData) {
+                if (!titleMap[item.issueUrl]) missingUrls.add(item.issueUrl);
+            }
+            if (missingUrls.size > 0) {
+                const repoSet = new Set();
+                for (const url of missingUrls) {
+                    const { owner, repo } = GitHubService.parseIssueUrl(url);
+                    repoSet.add(`${owner}/${repo}`);
+                }
+                for (const fullRepo of repoSet) {
+                    const [owner, repoName] = fullRepo.split('/');
+                    try {
+                        const repoIssues = await GitHubService.getRepoIssues(owner, repoName);
+                        for (const issue of repoIssues) {
+                            const key = `/${owner}/${repoName}/issues/${issue.number}`;
+                            if (!titleMap[key]) {
+                                const title = `(${owner}) ${repoName} | ${issue.title} | #${issue.number}`;
+                                titleMap[key] = title;
+                            }
+                        }
+                    } catch (e) {
+                        console.error(`Failed to fetch issues for ${fullRepo}:`, e);
+                    }
+                }
+            }
+
             const flatEntries = allUsersData.flatMap(item =>
                 item.entries.map(e => ({
                     issueUrl: item.issueUrl,
@@ -43,35 +84,41 @@ export function StatsTab({ tracked, user }) {
                 }))
             );
             setEveryoneData(flatEntries);
+            await StorageService.set(STORAGE_KEYS.EVERYONE_DATA, flatEntries);
+
+            // Merge current user's remote entries into local storage
+            if (username) {
+                const remoteMe = flatEntries.filter(e => e.user === username);
+                const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) || [];
+                const localKeys = new Set(trackedTimes.map(e => `${e.issueUrl}|${e.date}`));
+                const newEntries = remoteMe.filter(e => !localKeys.has(`${e.issueUrl}|${e.date}`));
+                if (newEntries.length > 0) {
+                    const toAdd = newEntries.map(e => ({
+                        issueUrl: e.issueUrl,
+                        title: e.title,
+                        seconds: e.seconds,
+                        date: e.date,
+                    }));
+                    trackedTimes.push(...toAdd);
+                    await StorageService.set(STORAGE_KEYS.TRACKED_TIMES, trackedTimes);
+                }
+            }
         } catch (e) {
             console.error('Failed to fetch everyone data:', e);
             setEveryoneData([]);
         } finally {
             setEveryoneLoading(false);
         }
-    }, [tracked]);
+    }, [tracked, user]);
 
     const handleUserModeChange = useCallback((mode) => {
         setUserMode(mode);
-        if (mode === 'everyone' && everyoneData === null) {
-            fetchEveryoneData();
-        }
-    }, [everyoneData, fetchEveryoneData]);
+    }, []);
 
     const activeEntries = useMemo(() => {
         if (userMode === 'everyone') return everyoneData || [];
-        // When we have fetched GitHub data, merge current user's remote entries
-        // with local data so "Me" includes issues not in local cache
-        if (everyoneData && user?.login) {
-            const remoteMe = everyoneData.filter(e => e.user === user.login);
-            // Build a set of issueUrl+date combos from local tracked
-            const localKeys = new Set(tracked.map(e => `${e.issueUrl}|${e.date}`));
-            // Add remote entries whose issue+date combo is not in local data
-            const missing = remoteMe.filter(e => !localKeys.has(`${e.issueUrl}|${e.date}`));
-            if (missing.length > 0) return [...tracked, ...missing];
-        }
         return tracked;
-    }, [userMode, everyoneData, tracked, user]);
+    }, [userMode, everyoneData, tracked]);
 
     const filteredEntries = useMemo(() => {
         if (rangeMode === 'today') return AggregationService.getTodayEntries(activeEntries);

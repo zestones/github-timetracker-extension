@@ -10,6 +10,7 @@ export const STORAGE_KEYS = {
     COMMENT_IDS: 'commentIds',
     AUTO_SYNC: 'autoSync',
     THEME: 'theme',
+    EVERYONE_DATA: 'everyoneData',
 };
 export const CACHE_PREFIX = 'cache:';
 export const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
