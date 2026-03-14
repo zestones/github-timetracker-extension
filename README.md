@@ -127,15 +127,34 @@ The extension is composed of three independently built entry points:
 
 ## Getting Started
 
-1. Install GitHub Time Tracker from the [Chrome Web Store](#).
-2. Navigate to any GitHub issue — a **Start Timer** button appears automatically.
-3. Open the extension popup to browse pinned repos, view the calendar, or check stats.
-4. To fix a session after the fact, go to **Stats** → select a repository → expand an issue → click the session duration and save the corrected value.
+1. Download the latest `github-time-tracker-vX.Y.Z.zip` from the [Releases](https://github.com/zestones/github-timetracker-extension/releases) page.
+2. Extract the zip into a permanent folder (e.g. `~/extensions/github-timetracker`). **Remember this location — you'll need it for updates.**
+3. Open `chrome://extensions` → enable **Developer mode** (top-right toggle).
+4. Click **Load unpacked** → select the extracted folder.
+5. Navigate to any GitHub issue — a **Start Timer** button appears automatically.
+6. Open the extension popup and add a GitHub Classic Personal Access Token in **Settings** to unlock syncing, issue browsing, and commenting.
 
 > [!TIP]
-> Add a GitHub Classic Personal Access Token in **Settings** to unlock commenting, syncing, and issue browsing features.
+> To fix a missed stop after the fact, go to **Stats → repository → expand an issue** and click the session duration to correct it manually.
 
 ---
+
+## Updating to a New Version
+
+> [!NOTE]
+> **Your data is safe regardless of how you update.** All tracked time is synced to GitHub issue comments, so even if you load the extension fresh from a new folder, everything can be recovered in one click via **Settings → Sync from GitHub**.
+
+**Update steps:**
+
+1. Download the new `github-time-tracker-vX.Y.Z.zip` from [Releases](https://github.com/zestones/github-timetracker-extension/releases).
+2. Extract the zip and **overwrite the contents of your existing folder**, or extract to a new folder entirely — your choice.
+3. Open `chrome://extensions`, find GitHub Time Tracker, and click the **reload icon** (↺). If you used a new folder, click **Load unpacked** instead and select it.
+4. If you loaded into a new folder, open **Settings → Sync from GitHub** to pull all your history back from the issue comments.
+
+> [!TIP]
+> In-place reload (same folder) is the fastest path — no re-auth, no sync needed. A new folder requires re-entering your token and triggering a sync, but no data is lost.
+
+
 
 ## Privacy
 
