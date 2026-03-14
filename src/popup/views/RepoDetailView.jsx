@@ -148,10 +148,11 @@ export function RepoDetailView({ repo, repoDetails, userMode, onBack }) {
                                 type="button"
                                 key={opt.key}
                                 onClick={() => handleSort(opt.key)}
-                                className={`text-[10px] px-2 py-1 rounded-md cursor-pointer transition-colors font-medium ${isActive
-                                    ? 'bg-accent-subtle text-accent'
-                                    : 'text-tertiary hover:bg-raised hover:text-secondary'
-                                    }`}
+                                className={`text-[10px] px-2 py-1 rounded-md cursor-pointer transition-colors font-medium ${
+                                    isActive
+                                        ? 'bg-accent-subtle text-accent'
+                                        : 'text-tertiary hover:bg-raised hover:text-secondary'
+                                }`}
                             >
                                 {opt.label}
                                 {arrow && ` ${arrow}`}
@@ -213,7 +214,9 @@ export function RepoDetailView({ repo, repoDetails, userMode, onBack }) {
                                                     className="flex items-center justify-between gap-3 rounded-lg bg-surface px-2.5 py-2 text-[11px]"
                                                 >
                                                     <div className="flex items-center gap-2 min-w-0">
-                                                        <span className="text-secondary font-medium">{session.date}</span>
+                                                        <span className="text-secondary font-medium">
+                                                            {session.date}
+                                                        </span>
                                                         {session.user && userMode === 'everyone' && (
                                                             <span className="text-[10px] text-secondary bg-raised px-1.5 py-0.5 rounded-full">
                                                                 {session.user}
@@ -224,7 +227,13 @@ export function RepoDetailView({ repo, repoDetails, userMode, onBack }) {
                                                         {userMode !== 'everyone' && (
                                                             <button
                                                                 type="button"
-                                                                onClick={() => setEditingSession({ issueUrl: issue.url, date: session.date, seconds: session.seconds })}
+                                                                onClick={() =>
+                                                                    setEditingSession({
+                                                                        issueUrl: issue.url,
+                                                                        date: session.date,
+                                                                        seconds: session.seconds,
+                                                                    })
+                                                                }
                                                                 className="flex items-center gap-1.5 text-[11px] font-medium text-accent bg-accent-subtle hover:bg-accent hover:text-white cursor-pointer transition-all px-2.5 py-1 rounded-md font-mono tabular-nums shadow-sm"
                                                                 title="Adjust tracked time"
                                                             >

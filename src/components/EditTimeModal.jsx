@@ -30,7 +30,10 @@ export function EditTimeModal({ date, seconds, onConfirm, onCancel }) {
 
                 <div className="flex items-center gap-2 mb-4">
                     <div className="flex-1 text-center">
-                        <label htmlFor="edit-hours" className="text-[10px] text-tertiary uppercase tracking-wider font-medium block mb-1">
+                        <label
+                            htmlFor="edit-hours"
+                            className="text-[10px] text-tertiary uppercase tracking-wider font-medium block mb-1"
+                        >
                             Hours
                         </label>
                         <div className="time-segment-field">
@@ -49,7 +52,10 @@ export function EditTimeModal({ date, seconds, onConfirm, onCancel }) {
                     </div>
                     <span className="text-[18px] text-muted font-bold mt-4">:</span>
                     <div className="flex-1 text-center">
-                        <label htmlFor="edit-minutes" className="text-[10px] text-tertiary uppercase tracking-wider font-medium block mb-1">
+                        <label
+                            htmlFor="edit-minutes"
+                            className="text-[10px] text-tertiary uppercase tracking-wider font-medium block mb-1"
+                        >
                             Min
                         </label>
                         <div className="time-segment-field">
@@ -68,7 +74,10 @@ export function EditTimeModal({ date, seconds, onConfirm, onCancel }) {
                     </div>
                     <span className="text-[18px] text-muted font-bold mt-4">:</span>
                     <div className="flex-1 text-center">
-                        <label htmlFor="edit-seconds" className="text-[10px] text-tertiary uppercase tracking-wider font-medium block mb-1">
+                        <label
+                            htmlFor="edit-seconds"
+                            className="text-[10px] text-tertiary uppercase tracking-wider font-medium block mb-1"
+                        >
                             Sec
                         </label>
                         <div className="time-segment-field">
