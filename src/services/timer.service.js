@@ -104,6 +104,30 @@ export class TimerService {
         }
     }
 
+    /** @param {string} issueUrl @param {string} date @param {number} oldSeconds @param {number} newSeconds @returns {Promise<boolean>} */
+    static async updateSessionTime(issueUrl, date, oldSeconds, newSeconds) {
+        try {
+            const trackedTimes = (await StorageService.get(STORAGE_KEYS.TRACKED_TIMES)) ?? [];
+            const idx = trackedTimes.findIndex(
+                (e) => e.issueUrl === issueUrl && e.date === date && e.seconds === oldSeconds,
+            );
+            if (idx === -1) return false;
+
+            trackedTimes[idx] = { ...trackedTimes[idx], seconds: newSeconds };
+            await StorageService.set(STORAGE_KEYS.TRACKED_TIMES, trackedTimes);
+
+            const githubToken = await GitHubStorageService.getGitHubToken();
+            if (githubToken) {
+                const { owner, repo, issueNumber } = GitHubService.parseIssueUrl(issueUrl);
+                TimerService.syncCommentInBackground(issueUrl, owner, repo, issueNumber, trackedTimes);
+            }
+            return true;
+        } catch (error) {
+            console.error('Failed to update session time:', error);
+            return false;
+        }
+    }
+
     static syncCommentInBackground(issueUrl, owner, repo, issueNumber, trackedTimes) {
         (async () => {
             try {

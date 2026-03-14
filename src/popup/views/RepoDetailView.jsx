@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'preact/hooks';
-import { IconChevronDown, IconChevronLeft, IconChevronRight, IconExternalLink } from '../../icons.jsx';
+import { EditTimeModal } from '../../components/EditTimeModal.jsx';
+import { IconChevronDown, IconChevronLeft, IconChevronRight, IconEdit, IconExternalLink } from '../../icons.jsx';
+import { TimerService } from '../../services/timer.service.js';
 import { TimeService } from '../../utils/time.utils.js';
 
 const SORT_OPTIONS = [
@@ -13,6 +15,7 @@ export function RepoDetailView({ repo, repoDetails, userMode, onBack }) {
     const [sort, setSort] = useState({ key: 'time', dir: 'desc' });
     const [expandedIssue, setExpandedIssue] = useState(null);
     const [filterText, setFilterText] = useState('');
+    const [editingSession, setEditingSession] = useState(null);
 
     const details = repoDetails || {};
     const issueList = useMemo(() => {
@@ -145,11 +148,10 @@ export function RepoDetailView({ repo, repoDetails, userMode, onBack }) {
                                 type="button"
                                 key={opt.key}
                                 onClick={() => handleSort(opt.key)}
-                                className={`text-[10px] px-2 py-1 rounded-md cursor-pointer transition-colors font-medium ${
-                                    isActive
-                                        ? 'bg-accent-subtle text-accent'
-                                        : 'text-tertiary hover:bg-raised hover:text-secondary'
-                                }`}
+                                className={`text-[10px] px-2 py-1 rounded-md cursor-pointer transition-colors font-medium ${isActive
+                                    ? 'bg-accent-subtle text-accent'
+                                    : 'text-tertiary hover:bg-raised hover:text-secondary'
+                                    }`}
                             >
                                 {opt.label}
                                 {arrow && ` ${arrow}`}
@@ -202,22 +204,40 @@ export function RepoDetailView({ repo, repoDetails, userMode, onBack }) {
                                     </div>
                                 </button>
                                 {isOpen && (
-                                    <div className="ml-6 border-l-2 border-border-subtle pl-3 py-1 mb-1 space-y-0.5">
+                                    <div className="ml-6 border-l-2 border-border-subtle pl-3 py-1 mb-1 space-y-1.5">
                                         {issue.sessions
                                             .sort((a, b) => b.date.localeCompare(a.date) || b.seconds - a.seconds)
                                             .map((session, si) => (
-                                                <div key={si} className="flex items-center justify-between text-[11px]">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-tertiary">{session.date}</span>
+                                                <div
+                                                    key={si}
+                                                    className="flex items-center justify-between gap-3 rounded-lg bg-surface px-2.5 py-2 text-[11px]"
+                                                >
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <span className="text-secondary font-medium">{session.date}</span>
                                                         {session.user && userMode === 'everyone' && (
                                                             <span className="text-[10px] text-secondary bg-raised px-1.5 py-0.5 rounded-full">
                                                                 {session.user}
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <span className="text-secondary font-mono tabular-nums">
-                                                        {TimeService.formatTime(session.seconds)}
-                                                    </span>
+                                                    <div className="flex items-center gap-2 shrink-0">
+                                                        {userMode !== 'everyone' && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditingSession({ issueUrl: issue.url, date: session.date, seconds: session.seconds })}
+                                                                className="flex items-center gap-1.5 text-[11px] font-medium text-accent bg-accent-subtle hover:bg-accent hover:text-white cursor-pointer transition-all px-2.5 py-1 rounded-md font-mono tabular-nums shadow-sm"
+                                                                title="Adjust tracked time"
+                                                            >
+                                                                <IconEdit size={12} />
+                                                                {TimeService.formatTime(session.seconds)}
+                                                            </button>
+                                                        )}
+                                                        {userMode === 'everyone' && (
+                                                            <span className="text-secondary font-mono tabular-nums bg-raised px-2.5 py-1 rounded-md">
+                                                                {TimeService.formatTime(session.seconds)}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ))}
                                     </div>
@@ -227,6 +247,22 @@ export function RepoDetailView({ repo, repoDetails, userMode, onBack }) {
                     })
                 )}
             </div>
+            {editingSession && (
+                <EditTimeModal
+                    date={editingSession.date}
+                    seconds={editingSession.seconds}
+                    onCancel={() => setEditingSession(null)}
+                    onConfirm={async (newSeconds) => {
+                        await TimerService.updateSessionTime(
+                            editingSession.issueUrl,
+                            editingSession.date,
+                            editingSession.seconds,
+                            newSeconds,
+                        );
+                        setEditingSession(null);
+                    }}
+                />
+            )}
         </div>
     );
 }

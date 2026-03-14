@@ -181,3 +181,50 @@
 .animate-pulse-dot {
     animation: pulse-dot 1.5s ease-in-out infinite;
 }
+
+.time-segment-field {
+    border: 1px solid var(--th-border-default);
+    background: color-mix(in srgb, var(--th-raised) 82%, transparent);
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    transition:
+        border-color 160ms ease,
+        box-shadow 160ms ease,
+        background-color 160ms ease,
+        transform 160ms ease;
+}
+
+.time-segment-field:focus-within {
+    border-color: var(--th-accent);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--th-accent) 20%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    background: color-mix(in srgb, var(--th-accent-subtle) 55%, var(--th-raised));
+    transform: translateY(-1px);
+}
+
+.time-segment-input {
+    width: 100%;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--th-txt-primary);
+    text-align: center;
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    padding: 0.7rem 0.5rem;
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.time-segment-input::-webkit-outer-spin-button,
+.time-segment-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.time-segment-input::selection {
+    background: color-mix(in srgb, var(--th-accent) 30%, transparent);
+}
